@@ -13,6 +13,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IVehicleService, VehicleService>();
+builder.Services.AddScoped<IServiceCatalogService, ServiceCatalogService>();
+builder.Services.AddScoped<ICenterService, CenterService>();
 
 
 var key = Encoding.ASCII.GetBytes(builder.Configuration["JwtSettings:SecretKey"]);

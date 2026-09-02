@@ -23,13 +23,11 @@ namespace VehicleServiceAPI.Services
 
         public async Task<User> RegisterAsync(RegisterDto registerDto)
         {
-            // Check if user exists
             if (await UserExistsAsync(registerDto.Email))
             {
                 throw new InvalidOperationException("Email already registered");
             }
 
-            // Hash password using BCrypt
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password);
 
             var user = new User
@@ -45,7 +43,6 @@ namespace VehicleServiceAPI.Services
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            // If role is Technician, create Technician record
             if (user.Role == "Technician" && user.CenterId.HasValue)
             {
                 var technician = new Technician
@@ -72,13 +69,11 @@ namespace VehicleServiceAPI.Services
                 throw new UnauthorizedAccessException("Invalid email or password");
             }
 
-            // Verify password using BCrypt
             if (!BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
             {
                 throw new UnauthorizedAccessException("Invalid email or password");
             }
 
-            // Generate JWT token
             var token = _jwtService.GenerateToken(user);
 
             _logger.LogInformation($"User logged in: {user.Email}");

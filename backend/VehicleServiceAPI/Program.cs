@@ -18,6 +18,8 @@ builder.Services.AddScoped<IVehicleService, VehicleService>();
 builder.Services.AddScoped<IServiceCatalogService, ServiceCatalogService>();
 builder.Services.AddScoped<ICenterService, CenterService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<ITechnicianService, TechnicianService>();
 
 var key = Encoding.ASCII.GetBytes(builder.Configuration["JwtSettings:SecretKey"]);
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -41,6 +43,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization(options =>
 {
+    options.AddPolicy("SuperAdminOnly", policy => policy.RequireRole("SuperAdmin"));
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin", "SuperAdmin"));
     options.AddPolicy("CustomerOnly", policy => policy.RequireRole("Customer"));
     options.AddPolicy("TechnicianOnly", policy => policy.RequireRole("Technician"));

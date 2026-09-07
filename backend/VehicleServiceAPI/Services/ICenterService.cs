@@ -8,6 +8,6 @@ namespace VehicleServiceAPI.Services
         Task<CenterResponseDto> GetCenterByIdAsync(int id);
         Task<CenterResponseDto> CreateCenterAsync(CreateCenterDto dto);
         Task<CenterResponseDto> UpdateCenterAsync(int id, UpdateCenterDto dto);
+        Task<bool> DeleteCenterAsync(int id);
     }
 }
-

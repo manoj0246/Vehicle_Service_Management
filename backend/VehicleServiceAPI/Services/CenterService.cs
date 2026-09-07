@@ -84,6 +84,27 @@ namespace VehicleServiceAPI.Services
             return await GetCenterByIdAsync(id);
         }
 
+        public async Task<bool> DeleteCenterAsync(int id)
+        {
+            var center = await _context.ServiceCenters
+                .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
+
+            if (center == null)
+                throw new KeyNotFoundException($"Service Center with ID {id} not found");
+
+            var hasServices = await _context.Services.AnyAsync(s => s.CenterId == id && !s.IsDeleted);
+            var hasTechnicians = await _context.Technicians.AnyAsync(t => t.CenterId == id && !t.IsDeleted);
+
+            if (hasServices || hasTechnicians)
+                throw new InvalidOperationException("Cannot delete service center with active services or technicians");
+
+            center.IsDeleted = true;
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation($"Service Center {id} deleted (soft delete)");
+            return true;
+        }
+
         private static CenterResponseDto MapToDto(ServiceCenter center)
         {
             return new CenterResponseDto
@@ -98,4 +119,3 @@ namespace VehicleServiceAPI.Services
         }
     }
 }
-

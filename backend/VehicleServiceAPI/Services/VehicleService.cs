@@ -25,7 +25,7 @@ namespace VehicleServiceAPI.Services
                 .ThenBy(v => v.Model)
                 .ToListAsync();
 
-            return vehicles.Select(v => MapToDto(v));
+            return vehicles.Select(MapToDto);
         }
 
         public async Task<VehicleDto> GetVehicleByIdAsync(int id, int customerId)
@@ -46,10 +46,26 @@ namespace VehicleServiceAPI.Services
         public async Task<VehicleDto> CreateVehicleAsync(int customerId, CreateVehicleDto createDto)
         {
             var existingVehicle = await _context.Vehicles
-                .FirstOrDefaultAsync(v => v.LicensePlate == createDto.LicensePlate && !v.IsDeleted);
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(v => v.LicensePlate == createDto.LicensePlate);
 
             if (existingVehicle != null)
-                throw new InvalidOperationException($"Vehicle with license plate {createDto.LicensePlate} already exists");
+            {
+                if (existingVehicle.IsDeleted && existingVehicle.CustomerId == customerId)
+                {
+                    existingVehicle.Make = createDto.Make;
+                    existingVehicle.Model = createDto.Model;
+                    existingVehicle.Year = createDto.Year;
+                    existingVehicle.Color = createDto.Color;
+                    existingVehicle.IsDeleted = false;
+
+                    await _context.SaveChangesAsync();
+                    _logger.LogInformation($"Vehicle {existingVehicle.LicensePlate} restored for customer {customerId}");
+                    return await GetVehicleByIdAsync(existingVehicle.Id, customerId);
+                }
+
+                throw new InvalidOperationException("This license plate is already registered in the system");
+            }
 
             var vehicle = new Vehicle
             {
@@ -62,8 +78,15 @@ namespace VehicleServiceAPI.Services
                 IsDeleted = false
             };
 
-            _context.Vehicles.Add(vehicle);
-            await _context.SaveChangesAsync();
+            try
+            {
+                _context.Vehicles.Add(vehicle);
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                throw new InvalidOperationException("This license plate is already registered in the system");
+            }
 
             _logger.LogInformation($"Vehicle {vehicle.LicensePlate} created for customer {customerId}");
 
@@ -84,10 +107,11 @@ namespace VehicleServiceAPI.Services
             if (vehicle.LicensePlate != updateDto.LicensePlate)
             {
                 var existingVehicle = await _context.Vehicles
-                    .FirstOrDefaultAsync(v => v.LicensePlate == updateDto.LicensePlate && !v.IsDeleted && v.Id != id);
+                    .IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(v => v.LicensePlate == updateDto.LicensePlate && v.Id != id);
 
                 if (existingVehicle != null)
-                    throw new InvalidOperationException($"Vehicle with license plate {updateDto.LicensePlate} already exists");
+                    throw new InvalidOperationException("This license plate is already registered in the system");
             }
 
             vehicle.Make = updateDto.Make;
@@ -96,7 +120,14 @@ namespace VehicleServiceAPI.Services
             vehicle.LicensePlate = updateDto.LicensePlate;
             vehicle.Color = updateDto.Color;
 
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                throw new InvalidOperationException("This license plate is already registered in the system");
+            }
 
             _logger.LogInformation($"Vehicle {vehicle.LicensePlate} updated");
 
@@ -127,12 +158,14 @@ namespace VehicleServiceAPI.Services
 
             return true;
         }
+
         public async Task<bool> VehicleExistsAsync(int id, int customerId)
         {
             return await _context.Vehicles
                 .AnyAsync(v => v.Id == id && v.CustomerId == customerId && !v.IsDeleted);
         }
-        private VehicleDto MapToDto(Vehicle vehicle)
+
+        private static VehicleDto MapToDto(Vehicle vehicle)
         {
             return new VehicleDto
             {

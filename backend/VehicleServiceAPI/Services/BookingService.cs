@@ -47,28 +47,40 @@ namespace VehicleServiceAPI.Services
             if (service == null)
                 throw new KeyNotFoundException($"Service with ID {request.ServiceId} not found");
 
-            var scheduledUtc = EnsureUtc(request.ScheduledDate);
-
-            if (scheduledUtc < DateTime.UtcNow)
+            var newStart = EnsureUtc(request.ScheduledDate);
+            if (newStart < DateTime.UtcNow)
                 throw new InvalidOperationException("Cannot book services in the past");
 
-            var vehicleConflict = await _context.ServiceRequests
-                .AnyAsync(sr => sr.VehicleId == request.VehicleId
-                    && sr.ScheduledDate == scheduledUtc
+            var durationMinutes = service.DurationMinutes > 0 ? service.DurationMinutes : 60;
+            var newEnd = newStart.AddMinutes(durationMinutes);
+
+            var activeVehicleBookings = await _context.ServiceRequests
+                .Include(sr => sr.Service)
+                .Where(sr => sr.VehicleId == request.VehicleId
                     && sr.Status != "Completed"
-                    && sr.Status != "Cancelled");
+                    && sr.Status != "Cancelled"
+                    && sr.ScheduledDate < newEnd)
+                .ToListAsync();
+
+            var vehicleConflict = activeVehicleBookings.Any(sr =>
+            {
+                var existingStart = EnsureUtc(sr.ScheduledDate);
+                var existingEnd = existingStart.AddMinutes(sr.Service?.DurationMinutes ?? 60);
+                return existingStart < newEnd && existingEnd > newStart;
+            });
 
             if (vehicleConflict)
-                throw new InvalidOperationException("This vehicle already has a booking at the selected time");
+                throw new InvalidOperationException("This vehicle already has an active booking during this time slot");
 
             if (request.TechnicianId.HasValue)
             {
                 var isAvailable = await IsTechnicianAvailableAsync(
                     request.TechnicianId.Value,
-                    scheduledUtc);
+                    newStart,
+                    durationMinutes);
 
                 if (!isAvailable)
-                    throw new InvalidOperationException("Selected technician is not available at this time");
+                    throw new InvalidOperationException("Selected technician is not available during this time slot or shift window");
             }
 
             var booking = new ServiceRequest
@@ -77,7 +89,7 @@ namespace VehicleServiceAPI.Services
                 VehicleId = request.VehicleId,
                 ServiceId = request.ServiceId,
                 TechnicianId = request.TechnicianId,
-                ScheduledDate = scheduledUtc,
+                ScheduledDate = newStart,
                 Status = request.TechnicianId.HasValue ? "Confirmed" : "Pending",
                 Notes = request.Notes,
                 CreatedAt = DateTime.UtcNow
@@ -88,13 +100,14 @@ namespace VehicleServiceAPI.Services
 
             _logger.LogInformation($"Booking created: ID {booking.Id}, Customer {customerId}, Status {booking.Status}");
 
-            return await MapToBookingResponse(booking);
+            return await GetBookingByIdAsync(booking.Id, customerId);
         }
 
         public async Task<IEnumerable<BookingResponseDto>> GetUpcomingBookingsAsync(int customerId)
         {
             var nowUtc = DateTime.UtcNow;
             var bookings = await _context.ServiceRequests
+                .Include(sr => sr.Customer)
                 .Include(sr => sr.Vehicle)
                 .Include(sr => sr.Service)
                 .Include(sr => sr.Technician)
@@ -106,17 +119,13 @@ namespace VehicleServiceAPI.Services
                 .OrderBy(sr => sr.ScheduledDate)
                 .ToListAsync();
 
-            var dtos = new List<BookingResponseDto>();
-            foreach (var booking in bookings)
-            {
-                dtos.Add(await MapToBookingResponse(booking));
-            }
-            return dtos;
+            return bookings.Select(MapToBookingResponse);
         }
 
         public async Task<IEnumerable<BookingResponseDto>> GetBookingHistoryAsync(int customerId, BookingFilterDto filters)
         {
             IQueryable<ServiceRequest> query = _context.ServiceRequests
+                .Include(sr => sr.Customer)
                 .Include(sr => sr.Vehicle)
                 .Include(sr => sr.Service)
                 .Include(sr => sr.Technician)
@@ -141,8 +150,8 @@ namespace VehicleServiceAPI.Services
             if (filters.ServiceId.HasValue)
                 query = query.Where(sr => sr.ServiceId == filters.ServiceId.Value);
 
-            var pageNumber = filters.Page > 0 ? filters.Page : 1;
-            var pageSize = filters.PageSize > 0 ? filters.PageSize : 10;
+            var pageNumber = Math.Clamp(filters.Page, 1, 10000);
+            var pageSize = Math.Clamp(filters.PageSize, 1, 100);
 
             var bookings = await query
                 .OrderByDescending(sr => sr.ScheduledDate)
@@ -150,17 +159,13 @@ namespace VehicleServiceAPI.Services
                 .Take(pageSize)
                 .ToListAsync();
 
-            var dtos = new List<BookingResponseDto>();
-            foreach (var booking in bookings)
-            {
-                dtos.Add(await MapToBookingResponse(booking));
-            }
-            return dtos;
+            return bookings.Select(MapToBookingResponse);
         }
 
         public async Task<BookingResponseDto> GetBookingByIdAsync(int bookingId, int customerId)
         {
             var booking = await _context.ServiceRequests
+                .Include(sr => sr.Customer)
                 .Include(sr => sr.Vehicle)
                 .Include(sr => sr.Service)
                 .Include(sr => sr.Technician)
@@ -173,7 +178,7 @@ namespace VehicleServiceAPI.Services
             if (booking.CustomerId != customerId)
                 throw new UnauthorizedAccessException("You don't own this booking");
 
-            return await MapToBookingResponse(booking);
+            return MapToBookingResponse(booking);
         }
 
         public async Task<bool> CancelBookingAsync(int bookingId, int customerId)
@@ -223,11 +228,11 @@ namespace VehicleServiceAPI.Services
         public async Task<IEnumerable<BookingResponseDto>> GetAllBookingsAsync(BookingFilterDto filters)
         {
             IQueryable<ServiceRequest> query = _context.ServiceRequests
+                .Include(sr => sr.Customer)
                 .Include(sr => sr.Vehicle)
                 .Include(sr => sr.Service)
                 .Include(sr => sr.Technician)
-                .ThenInclude(t => t.User)
-                .Include(sr => sr.Customer);
+                .ThenInclude(t => t.User);
 
             if (filters.FromDate.HasValue)
             {
@@ -250,8 +255,8 @@ namespace VehicleServiceAPI.Services
             if (filters.TechnicianId.HasValue)
                 query = query.Where(sr => sr.TechnicianId == filters.TechnicianId.Value);
 
-            var pageNumber = filters.Page > 0 ? filters.Page : 1;
-            var pageSize = filters.PageSize > 0 ? filters.PageSize : 10;
+            var pageNumber = Math.Clamp(filters.Page, 1, 10000);
+            var pageSize = Math.Clamp(filters.PageSize, 1, 100);
 
             var bookings = await query
                 .OrderByDescending(sr => sr.CreatedAt)
@@ -259,39 +264,46 @@ namespace VehicleServiceAPI.Services
                 .Take(pageSize)
                 .ToListAsync();
 
-            var dtos = new List<BookingResponseDto>();
-            foreach (var booking in bookings)
-            {
-                dtos.Add(await MapToBookingResponse(booking));
-            }
-            return dtos;
+            return bookings.Select(MapToBookingResponse);
         }
 
         public async Task<bool> AssignTechnicianAsync(int bookingId, int technicianId)
         {
-            var booking = await _context.ServiceRequests
-                .FirstOrDefaultAsync(sr => sr.Id == bookingId);
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var booking = await _context.ServiceRequests
+                    .Include(sr => sr.Service)
+                    .FirstOrDefaultAsync(sr => sr.Id == bookingId);
 
-            if (booking == null)
-                throw new KeyNotFoundException($"Booking with ID {bookingId} not found");
+                if (booking == null)
+                    throw new KeyNotFoundException($"Booking with ID {bookingId} not found");
 
-            if (booking.Status == "Completed" || booking.Status == "Cancelled")
-                throw new InvalidOperationException($"Cannot assign technician to {booking.Status} booking");
+                if (booking.Status == "Completed" || booking.Status == "Cancelled")
+                    throw new InvalidOperationException($"Cannot assign technician to {booking.Status} booking");
 
-            var scheduledUtc = EnsureUtc(booking.ScheduledDate);
-            var isAvailable = await IsTechnicianAvailableAsync(technicianId, scheduledUtc);
-            if (!isAvailable)
-                throw new InvalidOperationException("Technician is not available at this time");
+                var scheduledUtc = EnsureUtc(booking.ScheduledDate);
+                var durationMinutes = booking.Service?.DurationMinutes ?? 60;
 
-            booking.TechnicianId = technicianId;
-            booking.Status = "Confirmed";
-            booking.UpdatedAt = DateTime.UtcNow;
+                var isAvailable = await IsTechnicianAvailableAsync(technicianId, scheduledUtc, durationMinutes);
+                if (!isAvailable)
+                    throw new InvalidOperationException("Technician is not available during this time slot or shift window");
 
-            await _context.SaveChangesAsync();
+                booking.TechnicianId = technicianId;
+                booking.Status = "Confirmed";
+                booking.UpdatedAt = DateTime.UtcNow;
 
-            _logger.LogInformation($"Technician {technicianId} assigned to booking {bookingId}");
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
 
-            return true;
+                _logger.LogInformation($"Technician {technicianId} assigned to booking {bookingId}");
+                return true;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
         public async Task<bool> UpdateBookingStatusAsync(int bookingId, string status, string notes, string role, int userId)
@@ -331,7 +343,7 @@ namespace VehicleServiceAPI.Services
             return true;
         }
 
-        public async Task<bool> IsTechnicianAvailableAsync(int technicianId, DateTime scheduledDate)
+        public async Task<bool> IsTechnicianAvailableAsync(int technicianId, DateTime scheduledDate, int durationMinutes)
         {
             var technician = await _context.Technicians
                 .FirstOrDefaultAsync(t => t.Id == technicianId && !t.IsDeleted);
@@ -341,24 +353,37 @@ namespace VehicleServiceAPI.Services
 
             var scheduledUtc = EnsureUtc(scheduledDate);
             var dayOfWeek = scheduledUtc.DayOfWeek;
-            var timeOfDay = scheduledUtc.TimeOfDay;
+            var startTime = scheduledUtc.TimeOfDay;
+            var endTime = startTime.Add(TimeSpan.FromMinutes(durationMinutes));
 
             var availability = await _context.TechnicianAvailabilities
                 .FirstOrDefaultAsync(a => a.TechnicianId == technicianId
                     && a.DayOfWeek == dayOfWeek
-                    && timeOfDay >= a.StartTime
-                    && timeOfDay <= a.EndTime);
+                    && a.StartTime <= startTime
+                    && a.EndTime >= endTime);
 
             if (availability == null)
                 return false;
 
-            var existingBooking = await _context.ServiceRequests
-                .AnyAsync(sr => sr.TechnicianId == technicianId
-                    && sr.ScheduledDate == scheduledUtc
-                    && sr.Status != "Completed"
-                    && sr.Status != "Cancelled");
+            var newStart = scheduledUtc;
+            var newEnd = scheduledUtc.AddMinutes(durationMinutes);
 
-            return !existingBooking;
+            var activeTechBookings = await _context.ServiceRequests
+                .Include(sr => sr.Service)
+                .Where(sr => sr.TechnicianId == technicianId
+                    && sr.Status != "Completed"
+                    && sr.Status != "Cancelled"
+                    && sr.ScheduledDate < newEnd)
+                .ToListAsync();
+
+            var hasConflict = activeTechBookings.Any(sr =>
+            {
+                var existingStart = EnsureUtc(sr.ScheduledDate);
+                var existingEnd = existingStart.AddMinutes(sr.Service?.DurationMinutes ?? 60);
+                return existingStart < newEnd && existingEnd > newStart;
+            });
+
+            return !hasConflict;
         }
 
         public async Task<bool> ValidateVehicleOwnershipAsync(int vehicleId, int customerId)
@@ -367,37 +392,21 @@ namespace VehicleServiceAPI.Services
                 .AnyAsync(v => v.Id == vehicleId && v.CustomerId == customerId && !v.IsDeleted);
         }
 
-        private async Task<BookingResponseDto> MapToBookingResponse(ServiceRequest booking)
+        private static BookingResponseDto MapToBookingResponse(ServiceRequest booking)
         {
-            var vehicle = await _context.Vehicles.FindAsync(booking.VehicleId);
-            var service = await _context.Services.FindAsync(booking.ServiceId);
-            var customer = await _context.Users.FindAsync(booking.CustomerId);
-
-            string technicianName = "Not Assigned";
-            if (booking.TechnicianId.HasValue)
-            {
-                var tech = await _context.Technicians
-                    .Include(t => t.User)
-                    .FirstOrDefaultAsync(t => t.Id == booking.TechnicianId.Value);
-                if (tech?.User != null)
-                {
-                    technicianName = tech.User.Name;
-                }
-            }
-
             return new BookingResponseDto
             {
                 Id = booking.Id,
                 CustomerId = booking.CustomerId,
-                CustomerName = customer?.Name ?? "Unknown",
+                CustomerName = booking.Customer?.Name ?? "Unknown",
                 VehicleId = booking.VehicleId,
-                VehicleName = vehicle != null ? $"{vehicle.Make} {vehicle.Model}" : "Unknown",
-                LicensePlate = vehicle?.LicensePlate ?? "Unknown",
+                VehicleName = booking.Vehicle != null ? $"{booking.Vehicle.Make} {booking.Vehicle.Model}" : "Unknown",
+                LicensePlate = booking.Vehicle?.LicensePlate ?? "Unknown",
                 ServiceId = booking.ServiceId,
-                ServiceName = service?.Name ?? "Unknown",
-                ServicePrice = service?.Price ?? 0,
+                ServiceName = booking.Service?.Name ?? "Unknown",
+                ServicePrice = booking.Service?.Price ?? 0,
                 TechnicianId = booking.TechnicianId,
-                TechnicianName = technicianName,
+                TechnicianName = booking.Technician?.User?.Name ?? "Not Assigned",
                 ScheduledDate = booking.ScheduledDate,
                 Status = booking.Status,
                 Notes = booking.Notes,

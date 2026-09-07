@@ -115,6 +115,33 @@ namespace VehicleServiceAPI.Controllers
                 return StatusCode(500, new { success = false, message = "An error occurred" });
             }
         }
+
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "SuperAdmin")]
+        public async Task<IActionResult> DeleteCenter(int id)
+        {
+            try
+            {
+                await _centerService.DeleteCenterAsync(id);
+                return Ok(new
+                {
+                    success = true,
+                    message = "Service Center deleted successfully"
+                });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { success = false, message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error deleting center {id}");
+                return StatusCode(500, new { success = false, message = "An error occurred" });
+            }
+        }
     }
 }
-

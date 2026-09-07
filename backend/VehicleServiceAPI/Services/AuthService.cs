@@ -35,36 +35,26 @@ namespace VehicleServiceAPI.Services
                 Name = registerDto.Name,
                 Email = registerDto.Email,
                 PasswordHash = passwordHash,
-                Role = registerDto.Role ?? "Customer",
-                CenterId = registerDto.CenterId,
-                CreatedAt = DateTime.UtcNow
+                Role = "Customer",
+                CenterId = null,
+                CreatedAt = DateTime.UtcNow,
+                IsDeleted = false
             };
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            if (user.Role == "Technician" && user.CenterId.HasValue)
-            {
-                var technician = new Technician
-                {
-                    UserId = user.Id,
-                    CenterId = user.CenterId.Value,
-                    Specialization = "General"
-                };
-                _context.Technicians.Add(technician);
-                await _context.SaveChangesAsync();
-            }
-
-            _logger.LogInformation($"User registered: {user.Email} with role {user.Role}");
+            _logger.LogInformation($"Customer registered: {user.Email}");
             return user;
         }
 
         public async Task<(User user, string token)> LoginAsync(LoginDto loginDto)
         {
             var user = await _context.Users
+                .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(u => u.Email == loginDto.Email);
 
-            if (user == null)
+            if (user == null || user.IsDeleted)
             {
                 throw new UnauthorizedAccessException("Invalid email or password");
             }
@@ -82,7 +72,7 @@ namespace VehicleServiceAPI.Services
 
         public async Task<bool> UserExistsAsync(string email)
         {
-            return await _context.Users.AnyAsync(u => u.Email == email);
+            return await _context.Users.IgnoreQueryFilters().AnyAsync(u => u.Email == email);
         }
     }
 }

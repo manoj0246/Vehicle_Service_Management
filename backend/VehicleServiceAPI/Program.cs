@@ -11,7 +11,6 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IVehicleService, VehicleService>();
@@ -21,7 +20,13 @@ builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<ITechnicianService, TechnicianService>();
 
-var key = Encoding.ASCII.GetBytes(builder.Configuration["JwtSettings:SecretKey"]);
+var secretKey = builder.Configuration["JwtSettings:SecretKey"];
+if (string.IsNullOrEmpty(secretKey) || secretKey.Length < 32)
+{
+    throw new InvalidOperationException("JwtSettings:SecretKey configuration is missing or shorter than 32 characters.");
+}
+var key = Encoding.UTF8.GetBytes(secretKey);
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -40,7 +45,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("SuperAdminOnly", policy => policy.RequireRole("SuperAdmin"));
@@ -49,7 +53,6 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("TechnicianOnly", policy => policy.RequireRole("Technician"));
     options.AddPolicy("AdminOrTechnician", policy => policy.RequireRole("Admin", "Technician", "SuperAdmin"));
 });
-
 
 builder.Services.AddControllers();
 
@@ -73,7 +76,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowReact",
         policy =>
         {
-            policy.WithOrigins("http://localhost:3000")
+            policy.WithOrigins("http://localhost:3000", "http://localhost:5173")
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials();
@@ -82,16 +85,18 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    dbContext.Database.Migrate();
-}
-
 if (app.Environment.IsDevelopment())
 {
+    using var scope = app.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    dbContext.Database.Migrate();
+
     app.UseOpenApi();
     app.UseSwaggerUi();
+}
+else
+{
+    app.UseHttpsRedirection();
 }
 
 app.UseCors("AllowReact");

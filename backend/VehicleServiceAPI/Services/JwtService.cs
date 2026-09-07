@@ -15,10 +15,20 @@ namespace VehicleServiceAPI.Services
             _configuration = configuration;
         }
 
+        private byte[] GetSigningKeyBytes()
+        {
+            var secretKey = _configuration["JwtSettings:SecretKey"];
+            if (string.IsNullOrEmpty(secretKey) || secretKey.Length < 32)
+            {
+                throw new InvalidOperationException("JwtSettings:SecretKey is not configured or is shorter than 32 characters.");
+            }
+            return Encoding.UTF8.GetBytes(secretKey);
+        }
+
         public string GenerateToken(User user)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_configuration["JwtSettings:SecretKey"]);
+            var key = GetSigningKeyBytes();
 
             var claims = new List<Claim>
             {
@@ -28,7 +38,6 @@ namespace VehicleServiceAPI.Services
                 new Claim(ClaimTypes.Role, user.Role)
             };
 
-           
             if (user.CenterId.HasValue)
             {
                 claims.Add(new Claim("CenterId", user.CenterId.Value.ToString()));
@@ -53,7 +62,7 @@ namespace VehicleServiceAPI.Services
         public int? GetUserIdFromToken(string token)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_configuration["JwtSettings:SecretKey"]);
+            var key = GetSigningKeyBytes();
 
             try
             {
@@ -61,8 +70,10 @@ namespace VehicleServiceAPI.Services
                 {
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ValidateIssuer = false,
-                    ValidateAudience = false,
+                    ValidateIssuer = true,
+                    ValidIssuer = _configuration["JwtSettings:Issuer"],
+                    ValidateAudience = true,
+                    ValidAudience = _configuration["JwtSettings:Audience"],
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero
                 }, out _);
@@ -79,7 +90,7 @@ namespace VehicleServiceAPI.Services
         public string GetRoleFromToken(string token)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_configuration["JwtSettings:SecretKey"]);
+            var key = GetSigningKeyBytes();
 
             try
             {
@@ -87,8 +98,10 @@ namespace VehicleServiceAPI.Services
                 {
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ValidateIssuer = false,
-                    ValidateAudience = false,
+                    ValidateIssuer = true,
+                    ValidIssuer = _configuration["JwtSettings:Issuer"],
+                    ValidateAudience = true,
+                    ValidAudience = _configuration["JwtSettings:Audience"],
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero
                 }, out _);

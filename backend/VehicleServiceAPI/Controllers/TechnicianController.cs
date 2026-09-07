@@ -49,9 +49,8 @@ namespace VehicleServiceAPI.Controllers
             }
         }
 
-        [HttpGet("requests")]
-        [HttpGet("assigned-jobs")]
-        public async Task<IActionResult> GetAssignedRequests()
+        [HttpGet("jobs")]
+        public async Task<IActionResult> GetAssignedJobs()
         {
             try
             {
@@ -66,14 +65,13 @@ namespace VehicleServiceAPI.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting assigned requests");
+                _logger.LogError(ex, "Error getting assigned jobs");
                 return StatusCode(500, new { success = false, message = "An error occurred" });
             }
         }
 
-        [HttpGet("requests/{id}")]
         [HttpGet("jobs/{id}")]
-        public async Task<IActionResult> GetAssignedRequestById(int id)
+        public async Task<IActionResult> GetAssignedJobById(int id)
         {
             try
             {
@@ -92,14 +90,13 @@ namespace VehicleServiceAPI.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error getting assigned request {id}");
+                _logger.LogError(ex, $"Error getting assigned job {id}");
                 return StatusCode(500, new { success = false, message = "An error occurred" });
             }
         }
 
-        [HttpPut("requests/{id}/status")]
         [HttpPut("jobs/{id}/status")]
-        public async Task<IActionResult> UpdateRequestStatus(int id, [FromBody] BookingStatusUpdateDto updateDto)
+        public async Task<IActionResult> UpdateJobStatus(int id, [FromBody] BookingStatusUpdateDto updateDto)
         {
             try
             {
@@ -122,7 +119,7 @@ namespace VehicleServiceAPI.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error updating request status {id}");
+                _logger.LogError(ex, $"Error updating job status {id}");
                 return StatusCode(500, new { success = false, message = "An error occurred" });
             }
         }

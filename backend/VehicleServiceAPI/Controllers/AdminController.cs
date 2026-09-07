@@ -12,13 +12,11 @@ namespace VehicleServiceAPI.Controllers
     public class AdminController : ControllerBase
     {
         private readonly IAdminService _adminService;
-        private readonly IBookingService _bookingService;
         private readonly ILogger<AdminController> _logger;
 
-        public AdminController(IAdminService adminService, IBookingService bookingService, ILogger<AdminController> logger)
+        public AdminController(IAdminService adminService, ILogger<AdminController> logger)
         {
             _adminService = adminService;
-            _bookingService = bookingService;
             _logger = logger;
         }
 
@@ -257,174 +255,6 @@ namespace VehicleServiceAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Error deleting technician {id}");
-                return StatusCode(500, new { success = false, message = "An error occurred" });
-            }
-        }
-
-        [HttpGet("centers")]
-        [Authorize(Policy = "SuperAdminOnly")]
-        public async Task<IActionResult> GetAllCenters()
-        {
-            try
-            {
-                var centers = await _adminService.GetAllCentersAsync();
-                return Ok(new { success = true, count = centers.Count(), data = centers });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting centers");
-                return StatusCode(500, new { success = false, message = "An error occurred" });
-            }
-        }
-
-        [HttpGet("centers/{id}")]
-        [Authorize(Policy = "SuperAdminOnly")]
-        public async Task<IActionResult> GetCenterById(int id)
-        {
-            try
-            {
-                var center = await _adminService.GetCenterByIdAsync(id);
-                return Ok(new { success = true, data = center });
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { success = false, message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Error getting center {id}");
-                return StatusCode(500, new { success = false, message = "An error occurred" });
-            }
-        }
-
-        [HttpPost("centers")]
-        [Authorize(Policy = "SuperAdminOnly")]
-        public async Task<IActionResult> CreateCenter([FromBody] CreateCenterDto createDto)
-        {
-            try
-            {
-                var center = await _adminService.CreateCenterAsync(createDto);
-                return CreatedAtAction(
-                    nameof(GetCenterById),
-                    new { id = center.Id },
-                    new { success = true, message = "Service center created successfully", data = center }
-                );
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creating center");
-                return StatusCode(500, new { success = false, message = "An error occurred" });
-            }
-        }
-
-        [HttpPut("centers/{id}")]
-        [Authorize(Policy = "SuperAdminOnly")]
-        public async Task<IActionResult> UpdateCenter(int id, [FromBody] UpdateCenterDto updateDto)
-        {
-            try
-            {
-                var center = await _adminService.UpdateCenterAsync(id, updateDto);
-                return Ok(new { success = true, message = "Service center updated successfully", data = center });
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { success = false, message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Error updating center {id}");
-                return StatusCode(500, new { success = false, message = "An error occurred" });
-            }
-        }
-
-        [HttpDelete("centers/{id}")]
-        [Authorize(Policy = "SuperAdminOnly")]
-        public async Task<IActionResult> DeleteCenter(int id)
-        {
-            try
-            {
-                await _adminService.DeleteCenterAsync(id);
-                return Ok(new { success = true, message = "Service center deleted successfully" });
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { success = false, message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { success = false, message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Error deleting center {id}");
-                return StatusCode(500, new { success = false, message = "An error occurred" });
-            }
-        }
-
-        [HttpGet("bookings")]
-        public async Task<IActionResult> GetAllBookings([FromQuery] BookingFilterDto filters)
-        {
-            try
-            {
-                var bookings = await _bookingService.GetAllBookingsAsync(filters);
-                return Ok(new { success = true, count = bookings.Count(), data = bookings });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting all bookings");
-                return StatusCode(500, new { success = false, message = "An error occurred" });
-            }
-        }
-
-        [HttpPut("bookings/{id}/assign")]
-        public async Task<IActionResult> AssignTechnician(int id, [FromBody] int technicianId)
-        {
-            try
-            {
-                await _bookingService.AssignTechnicianAsync(id, technicianId);
-                return Ok(new { success = true, message = "Technician assigned successfully" });
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { success = false, message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Conflict(new { success = false, message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Error assigning technician to booking {id}");
-                return StatusCode(500, new { success = false, message = "An error occurred" });
-            }
-        }
-
-        [HttpPut("bookings/{id}/status")]
-        public async Task<IActionResult> UpdateBookingStatus(int id, [FromBody] BookingStatusUpdateDto updateDto)
-        {
-            try
-            {
-                var userId = GetCurrentUserId();
-                var role = GetCurrentUserRole();
-
-                await _bookingService.UpdateBookingStatusAsync(id, updateDto.Status, updateDto.Notes, role, userId);
-                return Ok(new { success = true, message = $"Status updated to {updateDto.Status} successfully" });
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { success = false, message = ex.Message });
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return StatusCode(403, new { success = false, message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { success = false, message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Error updating booking status {id}");
                 return StatusCode(500, new { success = false, message = "An error occurred" });
             }
         }

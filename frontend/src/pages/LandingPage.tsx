@@ -84,10 +84,10 @@ export const LandingPage: React.FC = () => {
 
           <div className="flex flex-wrap items-center justify-center gap-3.5 pt-4">
             <Link
-              to="/register"
+              to="/book"
               className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm shadow-lg shadow-blue-600/30 transition transform hover:-translate-y-0.5 cursor-pointer"
             >
-              <span>Get Started</span>
+              <span>Book a Service Now</span>
               <ArrowRight className="h-4 w-4" />
             </Link>
 
@@ -182,10 +182,10 @@ export const LandingPage: React.FC = () => {
                   </div>
 
                   <Link
-                    to="/register"
+                    to="/book"
                     className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs"
                   >
-                    <span>Get Started</span>
+                    <span>Book Service</span>
                     <ArrowRight className="h-3.5 w-3.5" />
                   </Link>
                 </div>
@@ -314,10 +314,10 @@ export const LandingPage: React.FC = () => {
             </p>
           </div>
           <Link
-            to="/register"
+            to="/book"
             className="px-6 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl transition cursor-pointer shrink-0"
           >
-            Create Account
+            Book Appointment
           </Link>
         </div>
       </section>

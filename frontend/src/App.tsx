@@ -6,6 +6,9 @@ import { Footer } from './components/Footer';
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
+import { BookServicePage } from './pages/customer/BookServicePage';
+import { VehiclesPage } from './pages/customer/VehiclesPage';
+import { AppointmentsPage } from './pages/customer/AppointmentsPage';
 
 export const App: React.FC = () => {
   return (
@@ -19,6 +22,9 @@ export const App: React.FC = () => {
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
+              <Route path="/book" element={<BookServicePage />} />
+              <Route path="/vehicles" element={<VehiclesPage />} />
+              <Route path="/appointments" element={<AppointmentsPage />} />
             </Routes>
           </main>
 

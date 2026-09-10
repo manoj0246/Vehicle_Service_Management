@@ -7,6 +7,8 @@ import {
   X, 
   ArrowRight, 
   LogOut, 
+  Car, 
+  Calendar, 
   PhoneCall
 } from 'lucide-react';
 
@@ -74,6 +76,23 @@ export const Navbar: React.FC = () => {
             <a href="/#centers" className="hover:text-blue-600 transition">
               Workshops
             </a>
+
+            {isAuthenticated && (
+              <>
+                <Link to="/vehicles" className="hover:text-blue-600 transition flex items-center gap-1.5">
+                  <Car className="h-4 w-4 text-slate-500" />
+                  <span>My Garage</span>
+                </Link>
+                <Link to="/book" className="hover:text-blue-600 transition flex items-center gap-1.5 font-bold text-blue-600">
+                  <Wrench className="h-4 w-4 text-blue-600" />
+                  <span>Book Service</span>
+                </Link>
+                <Link to="/appointments" className="hover:text-blue-600 transition flex items-center gap-1.5">
+                  <Calendar className="h-4 w-4 text-slate-500" />
+                  <span>My Bookings</span>
+                </Link>
+              </>
+            )}
           </nav>
 
           <div className="hidden md:flex items-center gap-3">
@@ -109,10 +128,10 @@ export const Navbar: React.FC = () => {
                   Sign In
                 </Link>
                 <Link
-                  to="/register"
+                  to="/book"
                   className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-xl shadow-xs transition cursor-pointer"
                 >
-                  <span>Register</span>
+                  <span>Book Service</span>
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               </div>
@@ -156,18 +175,42 @@ export const Navbar: React.FC = () => {
           </a>
 
           {isAuthenticated ? (
-            <div className="pt-3 border-t border-slate-100">
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  handleLogout();
-                }}
-                className="w-full py-2.5 text-center text-xs font-bold text-rose-600 bg-rose-50 rounded-xl flex items-center justify-center gap-2 cursor-pointer"
+            <>
+              <Link
+                to="/vehicles"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50"
               >
-                <LogOut className="h-4 w-4" />
-                <span>Logout ({user?.name})</span>
-              </button>
-            </div>
+                My Garage
+              </Link>
+              <Link
+                to="/book"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-lg text-sm font-bold text-blue-600 hover:bg-blue-50"
+              >
+                Book Service
+              </Link>
+              <Link
+                to="/appointments"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                My Bookings
+              </Link>
+
+              <div className="pt-3 border-t border-slate-100">
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    handleLogout();
+                  }}
+                  className="w-full py-2.5 text-center text-xs font-bold text-rose-600 bg-rose-50 rounded-xl flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Logout ({user?.name})</span>
+                </button>
+              </div>
+            </>
           ) : (
             <div className="pt-3 border-t border-slate-100 flex flex-col gap-2">
               <Link
@@ -178,11 +221,11 @@ export const Navbar: React.FC = () => {
                 Sign In
               </Link>
               <Link
-                to="/register"
+                to="/book"
                 onClick={() => setMobileMenuOpen(false)}
                 className="w-full text-center py-2 text-xs font-bold text-white bg-blue-600 rounded-xl"
               >
-                Register
+                Book Service
               </Link>
             </div>
           )}

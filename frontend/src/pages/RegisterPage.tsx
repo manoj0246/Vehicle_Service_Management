@@ -8,7 +8,6 @@ import {
   User as UserIcon, 
   AlertCircle, 
   ArrowRight, 
-  ShieldCheck, 
   Eye, 
   EyeOff, 
   Wrench,

@@ -20,6 +20,7 @@ namespace VehicleServiceAPI.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAllCenters()
         {
             try
@@ -40,6 +41,7 @@ namespace VehicleServiceAPI.Controllers
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetCenterById(int id)
         {
             try

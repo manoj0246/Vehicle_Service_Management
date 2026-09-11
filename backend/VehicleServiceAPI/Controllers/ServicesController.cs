@@ -20,6 +20,7 @@ namespace VehicleServiceAPI.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAllServices([FromQuery] int? centerId)
         {
             try
@@ -40,6 +41,7 @@ namespace VehicleServiceAPI.Controllers
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetServiceById(int id)
         {
             try

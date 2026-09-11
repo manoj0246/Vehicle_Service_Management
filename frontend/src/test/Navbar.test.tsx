@@ -25,10 +25,11 @@ describe('Navbar Component', () => {
     expect(screen.getByText(/Auto/i)).toBeInTheDocument();
     expect(screen.getByText(/1800-200-8899/i)).toBeInTheDocument();
     expect(screen.getByText('Sign In')).toBeInTheDocument();
-    expect(screen.getByText('Register')).toBeInTheDocument();
+    expect(screen.queryByText('My Garage')).not.toBeInTheDocument();
+    expect(screen.queryByText('My Bookings')).not.toBeInTheDocument();
   });
 
-  it('renders user profile badge and logout when user is logged in', () => {
+  it('renders customer links and profile badge when user is logged in', () => {
     vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
       user: {
         id: 1,
@@ -51,6 +52,8 @@ describe('Navbar Component', () => {
       </BrowserRouter>
     );
 
+    expect(screen.getByText('My Garage')).toBeInTheDocument();
+    expect(screen.getByText('My Bookings')).toBeInTheDocument();
     expect(screen.getByText('Rahul Sharma')).toBeInTheDocument();
     expect(screen.getByText('Customer')).toBeInTheDocument();
     expect(screen.getByTitle('Sign out')).toBeInTheDocument();

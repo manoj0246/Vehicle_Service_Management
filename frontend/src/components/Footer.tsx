@@ -32,13 +32,15 @@ export const Footer: React.FC = () => {
               <li><Link to="/" className="hover:text-white transition">Home</Link></li>
               <li><a href="/#services" className="hover:text-white transition">Service Catalog</a></li>
               <li><a href="/#centers" className="hover:text-white transition">Workshop Centers</a></li>
-              <li><Link to="/register" className="text-blue-400 hover:text-blue-300 transition font-semibold">Get Started</Link></li>
+              <li><Link to="/book" className="text-blue-400 hover:text-blue-300 transition font-semibold">Book Service</Link></li>
             </ul>
           </div>
 
           <div>
-            <h4 className="text-white font-bold text-xs tracking-wider uppercase mb-3">Account Portal</h4>
+            <h4 className="text-white font-bold text-xs tracking-wider uppercase mb-3">Customer Portal</h4>
             <ul className="space-y-2 text-xs">
+              <li><Link to="/vehicles" className="hover:text-white transition">My Garage</Link></li>
+              <li><Link to="/appointments" className="hover:text-white transition">My Appointments</Link></li>
               <li><Link to="/login" className="hover:text-white transition">Sign In</Link></li>
               <li><Link to="/register" className="hover:text-white transition">Register Account</Link></li>
             </ul>
@@ -78,7 +80,7 @@ export const Footer: React.FC = () => {
             <span>Accepted Payments:</span>
             <span className="text-slate-200 bg-slate-800 px-1.5 py-0.5 rounded">UPI</span>
             <span className="text-slate-200 bg-slate-800 px-1.5 py-0.5 rounded">RuPay</span>
-            <span className="text-slate-200 bg-slate-800 px-1.5 py-0.5 rounded">Visa / MC</span>
+            <span className="text-slate-200 bg-slate-800 px-1.5 py-0.5 rounded">Debit / Credit card</span>
             <span className="text-slate-200 bg-slate-800 px-1.5 py-0.5 rounded">NetBanking</span>
           </div>
         </div>

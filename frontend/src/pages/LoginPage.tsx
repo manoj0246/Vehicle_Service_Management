@@ -144,7 +144,7 @@ export const LoginPage: React.FC = () => {
                 to={redirectUrl !== '/' ? `/register?redirect=${encodeURIComponent(redirectUrl)}` : '/register'}
                 className="font-bold text-blue-600 hover:text-blue-500"
               >
-                Create Customer Account
+                Create Account
               </Link>
             </p>
           </div>

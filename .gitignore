@@ -1,3 +1,4 @@
+# Build & Environment
 bin/
 obj/
 .vs/
@@ -5,3 +6,7 @@ obj/
 node_modules/
 build/
 dist/
+.env
+*.user
+appsettings.local.json
+appsettings.Development.json

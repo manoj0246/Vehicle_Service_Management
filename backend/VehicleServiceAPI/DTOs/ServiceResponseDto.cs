@@ -1,0 +1,14 @@
+namespace VehicleServiceAPI.DTOs
+{
+    public class ServiceResponseDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public decimal Price { get; set; }
+        public int DurationMinutes { get; set; }
+        public int CenterId { get; set; }
+        public string CenterName { get; set; }
+    }
+}
+

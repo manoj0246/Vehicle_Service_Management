@@ -8,8 +8,14 @@ using VehicleServiceAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException("ConnectionStrings:DefaultConnection configuration is missing. Please configure it in appsettings.Development.json or via ConnectionStrings__DefaultConnection environment variable.");
+}
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -23,7 +29,7 @@ builder.Services.AddScoped<ITechnicianService, TechnicianService>();
 var secretKey = builder.Configuration["JwtSettings:SecretKey"];
 if (string.IsNullOrEmpty(secretKey) || secretKey.Length < 32)
 {
-    throw new InvalidOperationException("JwtSettings:SecretKey configuration is missing or shorter than 32 characters.");
+    throw new InvalidOperationException("JwtSettings:SecretKey configuration is missing or shorter than 32 characters. Please configure it in appsettings.Development.json or via JwtSettings__SecretKey environment variable.");
 }
 var key = Encoding.UTF8.GetBytes(secretKey);
 

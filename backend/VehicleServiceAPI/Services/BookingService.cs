@@ -37,70 +37,88 @@ namespace VehicleServiceAPI.Services
 
         public async Task<BookingResponseDto> BookServiceAsync(int customerId, BookingRequestDto request)
         {
-            if (!await ValidateVehicleOwnershipAsync(request.VehicleId, customerId))
-                throw new UnauthorizedAccessException("You can only book services for your own vehicles");
-
-            var service = await _context.Services
-                .Include(s => s.Center)
-                .FirstOrDefaultAsync(s => s.Id == request.ServiceId && !s.IsDeleted);
-
-            if (service == null)
-                throw new KeyNotFoundException($"Service with ID {request.ServiceId} not found");
-
-            var newStart = EnsureUtc(request.ScheduledDate);
-            if (newStart < DateTime.UtcNow)
-                throw new InvalidOperationException("Cannot book services in the past");
-
-            var durationMinutes = service.DurationMinutes > 0 ? service.DurationMinutes : 60;
-            var newEnd = newStart.AddMinutes(durationMinutes);
-
-            var activeVehicleBookings = await _context.ServiceRequests
-                .Include(sr => sr.Service)
-                .Where(sr => sr.VehicleId == request.VehicleId
-                    && sr.Status != "Completed"
-                    && sr.Status != "Cancelled"
-                    && sr.ScheduledDate < newEnd)
-                .ToListAsync();
-
-            var vehicleConflict = activeVehicleBookings.Any(sr =>
+            var isRelational = _context.Database.IsRelational();
+            using var transaction = isRelational ? await _context.Database.BeginTransactionAsync() : null;
+            try
             {
-                var existingStart = EnsureUtc(sr.ScheduledDate);
-                var existingEnd = existingStart.AddMinutes(sr.Service?.DurationMinutes ?? 60);
-                return existingStart < newEnd && existingEnd > newStart;
-            });
+                if (!await ValidateVehicleOwnershipAsync(request.VehicleId, customerId))
+                    throw new UnauthorizedAccessException("You can only book services for your own vehicles");
 
-            if (vehicleConflict)
-                throw new InvalidOperationException("This vehicle already has an active booking during this time slot");
+                var service = await _context.Services
+                    .Include(s => s.Center)
+                    .FirstOrDefaultAsync(s => s.Id == request.ServiceId && !s.IsDeleted);
 
-            if (request.TechnicianId.HasValue)
-            {
-                var isAvailable = await IsTechnicianAvailableAsync(
-                    request.TechnicianId.Value,
-                    newStart,
-                    durationMinutes);
+                if (service == null)
+                    throw new KeyNotFoundException($"Service with ID {request.ServiceId} not found");
 
-                if (!isAvailable)
-                    throw new InvalidOperationException("Selected technician is not available during this time slot or shift window");
+                var newStart = EnsureUtc(request.ScheduledDate);
+                if (newStart < DateTime.UtcNow)
+                    throw new InvalidOperationException("Cannot book services in the past");
+
+                var durationMinutes = service.DurationMinutes > 0 ? service.DurationMinutes : 60;
+                var newEnd = newStart.AddMinutes(durationMinutes);
+
+                var activeVehicleBookings = await _context.ServiceRequests
+                    .Include(sr => sr.Service)
+                    .Where(sr => sr.VehicleId == request.VehicleId
+                        && sr.Status != "Completed"
+                        && sr.Status != "Cancelled"
+                        && sr.ScheduledDate < newEnd)
+                    .ToListAsync();
+
+                var vehicleConflict = activeVehicleBookings.Any(sr =>
+                {
+                    var existingStart = EnsureUtc(sr.ScheduledDate);
+                    var existingEnd = existingStart.AddMinutes(sr.Service?.DurationMinutes ?? 60);
+                    return existingStart < newEnd && existingEnd > newStart;
+                });
+
+                if (vehicleConflict)
+                    throw new InvalidOperationException("This vehicle already has an active booking during this time slot");
+
+                if (request.TechnicianId.HasValue)
+                {
+                    var isAvailable = await IsTechnicianAvailableAsync(
+                        request.TechnicianId.Value,
+                        newStart,
+                        durationMinutes);
+
+                    if (!isAvailable)
+                        throw new InvalidOperationException("Selected technician is not available during this time slot or shift window");
+                }
+
+                var booking = new ServiceRequest
+                {
+                    CustomerId = customerId,
+                    VehicleId = request.VehicleId,
+                    ServiceId = request.ServiceId,
+                    TechnicianId = request.TechnicianId,
+                    ScheduledDate = newStart,
+                    Status = request.TechnicianId.HasValue ? "Confirmed" : "Pending",
+                    Notes = request.Notes,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _context.ServiceRequests.Add(booking);
+                await _context.SaveChangesAsync();
+
+                if (transaction != null)
+                {
+                    await transaction.CommitAsync();
+                }
+
+                _logger.LogInformation($"Booking created: ID {booking.Id}, Customer {customerId}, Status {booking.Status}");
+
+                return await GetBookingByIdAsync(booking.Id, customerId);
             }
-
-            var booking = new ServiceRequest
+            catch
             {
-                CustomerId = customerId,
-                VehicleId = request.VehicleId,
-                ServiceId = request.ServiceId,
-                TechnicianId = request.TechnicianId,
-                ScheduledDate = newStart,
-                Status = request.TechnicianId.HasValue ? "Confirmed" : "Pending",
-                Notes = request.Notes,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            _context.ServiceRequests.Add(booking);
-            await _context.SaveChangesAsync();
-
-            _logger.LogInformation($"Booking created: ID {booking.Id}, Customer {customerId}, Status {booking.Status}");
-
-            return await GetBookingByIdAsync(booking.Id, customerId);
+                if (transaction != null)
+                {
+                    await transaction.RollbackAsync();
+                }
+                throw;
+            }
         }
 
         public async Task<IEnumerable<BookingResponseDto>> GetUpcomingBookingsAsync(int customerId)
@@ -269,7 +287,8 @@ namespace VehicleServiceAPI.Services
 
         public async Task<bool> AssignTechnicianAsync(int bookingId, int technicianId)
         {
-            using var transaction = await _context.Database.BeginTransactionAsync();
+            var isRelational = _context.Database.IsRelational();
+            using var transaction = isRelational ? await _context.Database.BeginTransactionAsync() : null;
             try
             {
                 var booking = await _context.ServiceRequests
@@ -294,14 +313,20 @@ namespace VehicleServiceAPI.Services
                 booking.UpdatedAt = DateTime.UtcNow;
 
                 await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
+                if (transaction != null)
+                {
+                    await transaction.CommitAsync();
+                }
 
                 _logger.LogInformation($"Technician {technicianId} assigned to booking {bookingId}");
                 return true;
             }
             catch
             {
-                await transaction.RollbackAsync();
+                if (transaction != null)
+                {
+                    await transaction.RollbackAsync();
+                }
                 throw;
             }
         }

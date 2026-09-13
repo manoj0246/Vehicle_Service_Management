@@ -27,12 +27,10 @@ const DAYS_OF_WEEK = [
 export const TechnicianSchedulePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'timeline' | 'availability'>('timeline');
 
-  // Timeline state
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [scheduleJobs, setScheduleJobs] = useState<TechnicianJob[]>([]);
   const [timelineLoading, setTimelineLoading] = useState<boolean>(true);
 
-  // Availability state
   const [availabilities, setAvailabilities] = useState<{
     [day: number]: { enabled: boolean; startTime: string; endTime: string };
   }>({
@@ -71,12 +69,10 @@ export const TechnicianSchedulePage: React.FC = () => {
       const data = await technicianApi.getAvailability();
       const updated = { ...availabilities };
 
-      // Initialize all to disabled first
       DAYS_OF_WEEK.forEach(({ day }) => {
         updated[day] = { enabled: false, startTime: '09:00', endTime: '17:00' };
       });
 
-      // Populate from API
       data.forEach((item: TechnicianAvailability) => {
         const start = item.startTime.substring(0, 5);
         const end = item.endTime.substring(0, 5);
@@ -451,4 +447,3 @@ export const TechnicianSchedulePage: React.FC = () => {
 };
 
 export default TechnicianSchedulePage;
-

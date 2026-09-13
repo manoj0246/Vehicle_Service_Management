@@ -23,12 +23,9 @@ export const App: React.FC = () => {
 
           <main className="flex-grow">
             <Routes>
-              {/* Public Routes */}
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
-
-              {/* Customer Routes */}
               <Route
                 path="/book"
                 element={
@@ -53,8 +50,6 @@ export const App: React.FC = () => {
                   </ProtectedRoute>
                 }
               />
-
-              {/* Technician Routes */}
               <Route
                 path="/technician/dashboard"
                 element={

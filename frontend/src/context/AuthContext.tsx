@@ -76,7 +76,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           try {
             parsedUser = JSON.parse(savedUserStr);
           } catch {
-            // Ignore corrupt JSON in user storage
           }
         }
 

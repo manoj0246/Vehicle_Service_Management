@@ -20,9 +20,9 @@ export interface TechnicianDashboardStats {
 }
 
 export interface TechnicianAvailability {
-  dayOfWeek: number; // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-  startTime: string; // e.g. "09:00:00"
-  endTime: string;   // e.g. "17:00:00"
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
 }
 
 export interface JobStatusUpdateRequest {
@@ -31,4 +31,3 @@ export interface JobStatusUpdateRequest {
 }
 
 export type TechnicianJob = BookingResponse;
-

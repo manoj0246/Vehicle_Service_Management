@@ -9,7 +9,10 @@ import {
   LogOut, 
   Car, 
   Calendar, 
-  PhoneCall
+  PhoneCall,
+  LayoutDashboard,
+  ClipboardList,
+  Clock
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
@@ -35,6 +38,9 @@ export const Navbar: React.FC = () => {
         return 'bg-blue-100 text-blue-800 border-blue-200';
     }
   };
+
+  const isTechnician = user?.role === 'Technician';
+  const isAdmin = user?.role === 'Admin' || user?.role === 'SuperAdmin';
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
@@ -77,7 +83,24 @@ export const Navbar: React.FC = () => {
               Workshops
             </a>
 
-            {isAuthenticated && (
+            {isAuthenticated && isTechnician && (
+              <>
+                <Link to="/technician/dashboard" className="hover:text-blue-600 transition flex items-center gap-1.5 font-bold text-amber-700">
+                  <LayoutDashboard className="h-4 w-4" />
+                  <span>Dashboard</span>
+                </Link>
+                <Link to="/technician/jobs" className="hover:text-blue-600 transition flex items-center gap-1.5">
+                  <ClipboardList className="h-4 w-4 text-slate-500" />
+                  <span>Job Queue</span>
+                </Link>
+                <Link to="/technician/schedule" className="hover:text-blue-600 transition flex items-center gap-1.5">
+                  <Clock className="h-4 w-4 text-slate-500" />
+                  <span>My Schedule</span>
+                </Link>
+              </>
+            )}
+
+            {isAuthenticated && !isTechnician && !isAdmin && (
               <>
                 <Link to="/vehicles" className="hover:text-blue-600 transition flex items-center gap-1.5">
                   <Car className="h-4 w-4 text-slate-500" />
@@ -176,27 +199,55 @@ export const Navbar: React.FC = () => {
 
           {isAuthenticated ? (
             <>
-              <Link
-                to="/vehicles"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50"
-              >
-                My Garage
-              </Link>
-              <Link
-                to="/book"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-lg text-sm font-bold text-blue-600 hover:bg-blue-50"
-              >
-                Book Service
-              </Link>
-              <Link
-                to="/appointments"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50"
-              >
-                My Bookings
-              </Link>
+              {isTechnician ? (
+                <>
+                  <Link
+                    to="/technician/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-lg text-sm font-bold text-amber-700 hover:bg-amber-50"
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    to="/technician/jobs"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    Job Queue
+                  </Link>
+                  <Link
+                    to="/technician/schedule"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    My Schedule
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/vehicles"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    My Garage
+                  </Link>
+                  <Link
+                    to="/book"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-lg text-sm font-bold text-blue-600 hover:bg-blue-50"
+                  >
+                    Book Service
+                  </Link>
+                  <Link
+                    to="/appointments"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    My Bookings
+                  </Link>
+                </>
+              )}
 
               <div className="pt-3 border-t border-slate-100">
                 <button
@@ -234,3 +285,5 @@ export const Navbar: React.FC = () => {
     </header>
   );
 };
+
+export default Navbar;

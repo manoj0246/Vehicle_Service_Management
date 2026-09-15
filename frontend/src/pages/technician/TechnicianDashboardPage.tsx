@@ -12,6 +12,7 @@ import {
   TrendingUp,
   UserCheck,
   RefreshCw,
+  Car,
 } from 'lucide-react';
 import { technicianApi } from '../../api/technicianApi';
 import type { TechnicianDashboardStats, TechnicianJob } from '../../types/technician';
@@ -98,19 +99,19 @@ export const TechnicianDashboardPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-blue-50 text-blue-700 text-xs font-bold border border-blue-100">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-50 text-amber-700 text-xs font-bold border border-amber-200/60">
               <Wrench className="h-3.5 w-3.5" />
-              <span>Technician Workspace</span>
+              <span>Workshop Command Center</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight mt-1.5">
               Technician Dashboard
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500">
-              Manage your assigned service jobs, update bay progress, and manage shifts.
+            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+              Overview of your daily job schedule, active service bay tasks, and quick workflow controls.
             </p>
           </div>
 
@@ -118,30 +119,30 @@ export const TechnicianDashboardPage: React.FC = () => {
             <button
               onClick={loadDashboardData}
               disabled={loading}
-              className="inline-flex items-center gap-2 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold rounded-xl border border-slate-200 shadow-sm transition-all disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all disabled:opacity-50 cursor-pointer"
             >
-              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
               <span>Refresh</span>
             </button>
             <Link
               to="/technician/jobs"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl shadow-sm transition-all"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
             >
-              <span>View All Jobs</span>
-              <ArrowRight className="h-4 w-4" />
+              <span>View Job Queue</span>
+              <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
         </div>
 
         {error && (
-          <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center justify-between gap-3 text-rose-700 text-sm">
+          <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center justify-between gap-3 text-rose-700 text-xs sm:text-sm">
             <div className="flex items-center gap-2">
               <AlertCircle className="h-5 w-5 flex-shrink-0" />
               <span>{error}</span>
             </div>
             <button
               onClick={loadDashboardData}
-              className="px-3 py-1 bg-rose-100 hover:bg-rose-200 font-semibold rounded-lg text-xs transition-colors"
+              className="px-3 py-1 bg-rose-100 hover:bg-rose-200 font-bold rounded-lg text-xs transition-colors cursor-pointer"
             >
               Retry
             </button>
@@ -149,9 +150,9 @@ export const TechnicianDashboardPage: React.FC = () => {
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Active In-Progress</p>
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">In-Progress</p>
               <h3 className="text-2xl font-black text-slate-900 mt-1">
                 {loading ? '-' : stats?.inProgressBookings ?? 0}
               </h3>
@@ -161,9 +162,9 @@ export const TechnicianDashboardPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Ready / Confirmed</p>
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Ready / Confirmed</p>
               <h3 className="text-2xl font-black text-slate-900 mt-1">
                 {loading ? '-' : stats?.confirmedBookings ?? 0}
               </h3>
@@ -173,9 +174,9 @@ export const TechnicianDashboardPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Completed Jobs</p>
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Completed Jobs</p>
               <h3 className="text-2xl font-black text-slate-900 mt-1">
                 {loading ? '-' : stats?.completedBookings ?? 0}
               </h3>
@@ -185,9 +186,9 @@ export const TechnicianDashboardPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Assigned</p>
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Assigned</p>
               <h3 className="text-2xl font-black text-slate-900 mt-1">
                 {loading ? '-' : stats?.totalBookings ?? 0}
               </h3>
@@ -199,10 +200,10 @@ export const TechnicianDashboardPage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+          <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-5">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
                   <Calendar className="h-5 w-5 text-blue-600" />
                   <span>Today's Work Schedule</span>
                 </h2>
@@ -210,7 +211,7 @@ export const TechnicianDashboardPage: React.FC = () => {
               </div>
               <Link
                 to="/technician/schedule"
-                className="text-xs font-semibold text-blue-600 hover:text-blue-700 inline-flex items-center gap-1"
+                className="text-xs font-bold text-blue-600 hover:text-blue-700 inline-flex items-center gap-1"
               >
                 <span>Full Schedule</span>
                 <ArrowRight className="h-3.5 w-3.5" />
@@ -232,29 +233,35 @@ export const TechnicianDashboardPage: React.FC = () => {
                 {todayJobs.map((job) => (
                   <div
                     key={job.id}
-                    className="p-4 rounded-xl border border-slate-100 hover:border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                    className="p-4 rounded-xl border border-slate-100 hover:border-slate-200 bg-slate-50/70 hover:bg-slate-50 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
                   >
-                    <div className="space-y-1">
+                    <div className="space-y-1.5">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-bold text-slate-900">{job.serviceName}</span>
-                        <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold border ${getStatusBadge(job.status)}`}>
+                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${getStatusBadge(job.status)}`}>
                           {job.status}
+                        </span>
+                        <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">
+                          ₹{job.servicePrice.toLocaleString('en-IN')}
                         </span>
                       </div>
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
-                        <span className="font-semibold text-slate-700">{job.vehicleName} ({job.licensePlate})</span>
+                        <span className="font-semibold text-slate-800 flex items-center gap-1">
+                          <Car className="h-3.5 w-3.5 text-slate-400" />
+                          {job.vehicleName} ({job.licensePlate})
+                        </span>
                         <span className="flex items-center gap-1">
                           <UserCheck className="h-3.5 w-3.5 text-slate-400" />
                           {job.customerName}
                         </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3.5 w-3.5 text-slate-400" />
+                        <span className="flex items-center gap-1 font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-100/60">
+                          <Clock className="h-3.5 w-3.5" />
                           {new Date(job.scheduledDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
                       {job.notes && (
                         <p className="text-xs text-slate-600 bg-white px-2.5 py-1 rounded-md border border-slate-200/60 inline-block mt-1">
-                          <span className="font-medium text-slate-700">Notes:</span> {job.notes}
+                          <span className="font-bold text-slate-700">Notes:</span> {job.notes}
                         </p>
                       )}
                     </div>
@@ -264,7 +271,7 @@ export const TechnicianDashboardPage: React.FC = () => {
                         <button
                           onClick={() => handleStartJob(job.id)}
                           disabled={actionLoading === job.id}
-                          className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg shadow-sm transition-all disabled:opacity-50 flex items-center gap-1.5"
+                          className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg shadow-xs transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
                         >
                           <PlayCircle className="h-3.5 w-3.5" />
                           <span>Start Job</span>
@@ -278,7 +285,7 @@ export const TechnicianDashboardPage: React.FC = () => {
                             setWorkNotes('');
                           }}
                           disabled={actionLoading === job.id}
-                          className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm transition-all disabled:opacity-50 flex items-center gap-1.5"
+                          className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-xs transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
                         >
                           <Check className="h-3.5 w-3.5" />
                           <span>Complete</span>
@@ -292,43 +299,43 @@ export const TechnicianDashboardPage: React.FC = () => {
           </div>
 
           <div className="space-y-6">
-            <div className="bg-gradient-to-br from-blue-700 to-indigo-800 text-white p-6 rounded-2xl shadow-md space-y-4">
-              <div className="inline-flex p-2 bg-white/10 rounded-xl backdrop-blur-sm">
-                <Calendar className="h-6 w-6 text-blue-200" />
+            <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6 rounded-2xl shadow-sm space-y-4">
+              <div className="inline-flex p-2.5 bg-white/10 rounded-xl backdrop-blur-sm">
+                <Calendar className="h-5 w-5 text-amber-400" />
               </div>
               <div>
-                <h3 className="text-lg font-bold">Shift & Weekly Availability</h3>
-                <p className="text-xs text-blue-100 mt-1 leading-relaxed">
-                  Configure your working hours for each day of the week to ensure the automated booking engine only allocates slots during your active shifts.
+                <h3 className="text-base font-bold text-white">Shift & Weekly Availability</h3>
+                <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                  Configure your workshop working hours to ensure the booking engine automatically matches appointments to your active shifts.
                 </p>
               </div>
               <Link
                 to="/technician/schedule"
-                className="inline-flex items-center justify-center gap-2 w-full py-2.5 bg-white hover:bg-blue-50 text-blue-800 text-xs font-bold rounded-xl shadow-sm transition-all"
+                className="inline-flex items-center justify-center gap-2 w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
               >
                 <span>Manage Shift Hours</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                 <Wrench className="h-4 w-4 text-blue-600" />
-                <span>Quick Actions</span>
+                <span>Quick Navigation</span>
               </h3>
               <div className="space-y-2">
                 <Link
                   to="/technician/jobs"
                   className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-blue-50/60 hover:text-blue-700 text-slate-700 text-xs font-semibold border border-slate-200/70 transition-all"
                 >
-                  <span>Open Full Job Queue</span>
+                  <span>Assigned Job Queue</span>
                   <ArrowRight className="h-4 w-4 text-slate-400" />
                 </Link>
                 <Link
                   to="/technician/schedule"
                   className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-blue-50/60 hover:text-blue-700 text-slate-700 text-xs font-semibold border border-slate-200/70 transition-all"
                 >
-                  <span>View Appointment Calendar</span>
+                  <span>Daily Appointment Timeline</span>
                   <ArrowRight className="h-4 w-4 text-slate-400" />
                 </Link>
               </div>
@@ -367,14 +374,14 @@ export const TechnicianDashboardPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setCompletingJobId(null)}
-                    className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-all"
+                    className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-all cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={actionLoading === completingJobId}
-                    className="px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-sm transition-all disabled:opacity-50 flex items-center gap-1.5"
+                    className="px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-xs transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
                   >
                     {actionLoading === completingJobId && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
                     <span>Confirm Completion</span>
@@ -390,4 +397,3 @@ export const TechnicianDashboardPage: React.FC = () => {
 };
 
 export default TechnicianDashboardPage;
-

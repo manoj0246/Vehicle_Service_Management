@@ -59,7 +59,11 @@ export const RegisterPage: React.FC = () => {
 
     try {
       await register({ name, email, password });
-      navigate(redirectUrl);
+      if (searchParams.get('redirect')) {
+        navigate(searchParams.get('redirect')!);
+      } else {
+        navigate('/vehicles');
+      }
     } catch (err: any) {
       if (err.response?.data?.message) {
         setError(err.response.data.message);

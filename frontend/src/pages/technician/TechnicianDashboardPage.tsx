@@ -105,7 +105,7 @@ export const TechnicianDashboardPage: React.FC = () => {
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-50 text-amber-700 text-xs font-bold border border-amber-200/60">
               <Wrench className="h-3.5 w-3.5" />
-              <span>Workshop Command Center</span>
+              <span>Workshop Center</span>
             </div>
             <h1 className="text-2xl font-black text-slate-900 tracking-tight mt-1.5">
               Technician Dashboard

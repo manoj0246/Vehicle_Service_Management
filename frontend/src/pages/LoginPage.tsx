@@ -31,8 +31,16 @@ export const LoginPage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      await login({ email, password });
-      navigate(redirectUrl);
+      const loggedInUser = await login({ email, password });
+      if (searchParams.get('redirect')) {
+        navigate(searchParams.get('redirect')!);
+      } else if (loggedInUser.role === 'Technician') {
+        navigate('/technician/dashboard');
+      } else if (loggedInUser.role === 'Admin' || loggedInUser.role === 'SuperAdmin') {
+        navigate('/technician/dashboard');
+      } else {
+        navigate('/vehicles');
+      }
     } catch (err: any) {
       if (err.response?.data?.message) {
         setError(err.response.data.message);

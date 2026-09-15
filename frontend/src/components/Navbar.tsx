@@ -58,7 +58,7 @@ export const Navbar: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center gap-2.5">
+          <Link to={isTechnician ? "/technician/dashboard" : "/"} className="flex items-center gap-2.5">
             <div className="h-9 w-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-sm">
               <Wrench className="h-4.5 w-4.5" />
             </div>
@@ -73,20 +73,10 @@ export const Navbar: React.FC = () => {
           </Link>
 
           <nav className="hidden md:flex items-center gap-6 text-sm font-semibold text-slate-700">
-            <Link to="/" className="hover:text-blue-600 transition">
-              Home
-            </Link>
-            <a href="/#services" className="hover:text-blue-600 transition">
-              Services
-            </a>
-            <a href="/#centers" className="hover:text-blue-600 transition">
-              Workshops
-            </a>
-
-            {isAuthenticated && isTechnician && (
+            {isAuthenticated && isTechnician ? (
               <>
                 <Link to="/technician/dashboard" className="hover:text-blue-600 transition flex items-center gap-1.5 font-bold text-amber-700">
-                  <LayoutDashboard className="h-4 w-4" />
+                  <LayoutDashboard className="h-4 w-4 text-amber-600" />
                   <span>Dashboard</span>
                 </Link>
                 <Link to="/technician/jobs" className="hover:text-blue-600 transition flex items-center gap-1.5">
@@ -98,10 +88,11 @@ export const Navbar: React.FC = () => {
                   <span>My Schedule</span>
                 </Link>
               </>
-            )}
-
-            {isAuthenticated && !isTechnician && !isAdmin && (
+            ) : isAuthenticated && !isTechnician && !isAdmin ? (
               <>
+                <Link to="/" className="hover:text-blue-600 transition">
+                  Home
+                </Link>
                 <Link to="/vehicles" className="hover:text-blue-600 transition flex items-center gap-1.5">
                   <Car className="h-4 w-4 text-slate-500" />
                   <span>My Garage</span>
@@ -114,6 +105,18 @@ export const Navbar: React.FC = () => {
                   <Calendar className="h-4 w-4 text-slate-500" />
                   <span>My Bookings</span>
                 </Link>
+              </>
+            ) : (
+              <>
+                <Link to="/" className="hover:text-blue-600 transition">
+                  Home
+                </Link>
+                <a href="/#services" className="hover:text-blue-600 transition">
+                  Services
+                </a>
+                <a href="/#centers" className="hover:text-blue-600 transition">
+                  Workshops
+                </a>
               </>
             )}
           </nav>
@@ -175,28 +178,6 @@ export const Navbar: React.FC = () => {
 
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-5 space-y-2 shadow-lg">
-          <Link
-            to="/"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50"
-          >
-            Home
-          </Link>
-          <a
-            href="/#services"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50"
-          >
-            Services
-          </a>
-          <a
-            href="/#centers"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50"
-          >
-            Workshops
-          </a>
-
           {isAuthenticated ? (
             <>
               {isTechnician ? (
@@ -225,6 +206,13 @@ export const Navbar: React.FC = () => {
                 </>
               ) : (
                 <>
+                  <Link
+                    to="/"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    Home
+                  </Link>
                   <Link
                     to="/vehicles"
                     onClick={() => setMobileMenuOpen(false)}
@@ -263,22 +251,46 @@ export const Navbar: React.FC = () => {
               </div>
             </>
           ) : (
-            <div className="pt-3 border-t border-slate-100 flex flex-col gap-2">
+            <>
               <Link
-                to="/login"
+                to="/"
                 onClick={() => setMobileMenuOpen(false)}
-                className="w-full text-center py-2 text-xs font-bold text-slate-700 bg-slate-100 rounded-xl"
+                className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50"
               >
-                Sign In
+                Home
               </Link>
-              <Link
-                to="/book"
+              <a
+                href="/#services"
                 onClick={() => setMobileMenuOpen(false)}
-                className="w-full text-center py-2 text-xs font-bold text-white bg-blue-600 rounded-xl"
+                className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50"
               >
-                Book Service
-              </Link>
-            </div>
+                Services
+              </a>
+              <a
+                href="/#centers"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Workshops
+              </a>
+
+              <div className="pt-3 border-t border-slate-100 flex flex-col gap-2">
+                <Link
+                  to="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full text-center py-2 text-xs font-bold text-slate-700 bg-slate-100 rounded-xl"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/book"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full text-center py-2 text-xs font-bold text-white bg-blue-600 rounded-xl"
+                >
+                  Book Service
+                </Link>
+              </div>
+            </>
           )}
         </div>
       )}

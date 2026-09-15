@@ -10,6 +10,9 @@ import { RegisterPage } from './pages/RegisterPage';
 import { BookServicePage } from './pages/customer/BookServicePage';
 import { VehiclesPage } from './pages/customer/VehiclesPage';
 import { AppointmentsPage } from './pages/customer/AppointmentsPage';
+import { TechnicianDashboardPage } from './pages/technician/TechnicianDashboardPage';
+import { TechnicianJobsPage } from './pages/technician/TechnicianJobsPage';
+import { TechnicianSchedulePage } from './pages/technician/TechnicianSchedulePage';
 
 export const App: React.FC = () => {
   return (
@@ -44,6 +47,30 @@ export const App: React.FC = () => {
                 element={
                   <ProtectedRoute>
                     <AppointmentsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/technician/dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={['Technician', 'Admin', 'SuperAdmin']}>
+                    <TechnicianDashboardPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/technician/jobs"
+                element={
+                  <ProtectedRoute allowedRoles={['Technician', 'Admin', 'SuperAdmin']}>
+                    <TechnicianJobsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/technician/schedule"
+                element={
+                  <ProtectedRoute allowedRoles={['Technician', 'Admin', 'SuperAdmin']}>
+                    <TechnicianSchedulePage />
                   </ProtectedRoute>
                 }
               />

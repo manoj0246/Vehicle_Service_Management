@@ -79,7 +79,7 @@ export const LandingPage: React.FC = () => {
           </h1>
 
           <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl mx-auto font-normal">
-            Book certified mechanics across major Indian metropolitan hubs. Enjoy 100% genuine OEM parts, collision-free slot booking, and fixed INR pricing.
+            Book certified mechanics across major Indian metropolitan hubs. Enjoy 100% genuine OEM parts, collision-free slot booking.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-3.5 pt-4">

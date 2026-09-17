@@ -34,7 +34,21 @@ describe('BookServicePage Component', () => {
   });
 
   it('renders booking steps, select car, and submits booking', async () => {
-    const bookMock = vi.spyOn(bookingApi, 'bookService').mockResolvedValue({ id: 99 } as any);
+    const bookMock = vi.spyOn(bookingApi, 'bookService').mockResolvedValue({
+      id: 99,
+      customerId: 1,
+      customerName: 'Rahul Sharma',
+      serviceId: 101,
+      serviceName: 'Full Engine Diagnostics',
+      servicePrice: 89.99,
+      vehicleId: 1,
+      vehicleName: 'Maruti Suzuki Swift',
+      licensePlate: 'DL-01-AB-1234',
+      status: 'Pending',
+      scheduledDate: '2026-09-10T10:00:00Z',
+      notes: '',
+      createdAt: '2026-09-09T10:00:00Z',
+    });
 
     render(
       <BrowserRouter>

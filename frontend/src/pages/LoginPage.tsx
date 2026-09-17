@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -37,15 +38,19 @@ export const LoginPage: React.FC = () => {
       } else if (loggedInUser.role === 'Technician') {
         navigate('/technician/dashboard');
       } else if (loggedInUser.role === 'Admin' || loggedInUser.role === 'SuperAdmin') {
-        navigate('/technician/dashboard');
+        navigate('/admin/dashboard');
       } else {
         navigate('/vehicles');
       }
-    } catch (err: any) {
-      if (err.response?.data?.message) {
-        setError(err.response.data.message);
-      } else if (err.code === 'ERR_NETWORK' || !err.response) {
-        setError('Cannot connect to backend server. Please ensure the .NET API is running on http://localhost:5052.');
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        if (err.response?.data?.message) {
+          setError(err.response.data.message);
+        } else if (err.code === 'ERR_NETWORK' || !err.response) {
+          setError('Cannot connect to backend server. Please ensure the .NET API is running on http://localhost:5052.');
+        } else {
+          setError('Invalid email or password. Please check your credentials.');
+        }
       } else {
         setError('Invalid email or password. Please check your credentials.');
       }

@@ -38,7 +38,7 @@ describe('AppointmentsPage Component', () => {
       },
     ]);
     vi.spyOn(bookingApi, 'getBookingHistory').mockResolvedValue([]);
-    const cancelMock = vi.spyOn(bookingApi, 'cancelBooking').mockResolvedValue({} as any);
+    const cancelMock = vi.spyOn(bookingApi, 'cancelBooking').mockResolvedValue(undefined);
 
     render(
       <BrowserRouter>

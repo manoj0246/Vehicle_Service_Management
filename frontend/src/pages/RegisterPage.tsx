@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -64,17 +65,21 @@ export const RegisterPage: React.FC = () => {
       } else {
         navigate('/vehicles');
       }
-    } catch (err: any) {
-      if (err.response?.data?.message) {
-        setError(err.response.data.message);
-      } else if (err.response?.data?.errors) {
-        const errors = err.response.data.errors;
-        const firstField = Object.keys(errors)[0];
-        setError(errors[firstField]?.[0] || 'Validation error.');
-      } else if (typeof err.response?.data === 'string') {
-        setError(err.response.data);
-      } else if (err.code === 'ERR_NETWORK' || !err.response) {
-        setError('Cannot connect to backend server. Please ensure the .NET API is running on http://localhost:5052.');
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        if (err.response?.data?.message) {
+          setError(err.response.data.message);
+        } else if (err.response?.data?.errors) {
+          const errors = err.response.data.errors as Record<string, string[]>;
+          const firstField = Object.keys(errors)[0];
+          setError(errors[firstField]?.[0] || 'Validation error.');
+        } else if (typeof err.response?.data === 'string') {
+          setError(err.response.data);
+        } else if (err.code === 'ERR_NETWORK' || !err.response) {
+          setError('Cannot connect to backend server. Please ensure the .NET API is running on http://localhost:5052.');
+        } else {
+          setError('Registration failed. Please check your information and try again.');
+        }
       } else {
         setError('Registration failed. Please check your information and try again.');
       }

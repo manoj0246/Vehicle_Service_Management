@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
 import {
   Calendar,
   Clock,
@@ -47,27 +48,30 @@ export const TechnicianSchedulePage: React.FC = () => {
 
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  const fetchDailySchedule = async (dateStr: string) => {
+  const fetchDailySchedule = useCallback(async (dateStr: string) => {
     setTimelineLoading(true);
     setMessage(null);
     try {
       const data = await technicianApi.getDailySchedule(dateStr);
       setScheduleJobs(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMsg = axios.isAxiosError(err) ? err.response?.data?.message : undefined;
       setMessage({
         type: 'error',
-        text: err.response?.data?.message || 'Failed to load daily schedule.',
+        text: errorMsg ?? 'Failed to load daily schedule.',
       });
     } finally {
       setTimelineLoading(false);
     }
-  };
+  }, []);
 
-  const fetchAvailability = async () => {
+  const fetchAvailability = useCallback(async () => {
     setAvailabilityLoading(true);
     try {
       const data = await technicianApi.getAvailability();
-      const updated = { ...availabilities };
+      const updated: {
+        [day: number]: { enabled: boolean; startTime: string; endTime: string };
+      } = {};
 
       DAYS_OF_WEEK.forEach(({ day }) => {
         updated[day] = { enabled: false, startTime: '09:00', endTime: '17:00' };
@@ -84,24 +88,24 @@ export const TechnicianSchedulePage: React.FC = () => {
       });
 
       setAvailabilities(updated);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMsg = axios.isAxiosError(err) ? err.response?.data?.message : undefined;
       setMessage({
         type: 'error',
-        text: err.response?.data?.message || 'Failed to load shift availability.',
+        text: errorMsg ?? 'Failed to load shift availability.',
       });
     } finally {
       setAvailabilityLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchDailySchedule(selectedDate);
     fetchAvailability();
-  }, []);
+  }, [fetchDailySchedule, fetchAvailability, selectedDate]);
 
   const handleDateChange = (newDate: string) => {
     setSelectedDate(newDate);
-    fetchDailySchedule(newDate);
   };
 
   const handleStepDay = (delta: number) => {
@@ -164,10 +168,11 @@ export const TechnicianSchedulePage: React.FC = () => {
         type: 'success',
         text: 'Weekly shift availability updated successfully!',
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMsg = axios.isAxiosError(err) ? err.response?.data?.message : undefined;
       setMessage({
         type: 'error',
-        text: err.response?.data?.message || 'Failed to save shift availability.',
+        text: errorMsg ?? 'Failed to save shift availability.',
       });
     } finally {
       setSavingAvailability(false);

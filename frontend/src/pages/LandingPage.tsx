@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { 
   Wrench, 
@@ -24,7 +25,7 @@ export const LandingPage: React.FC = () => {
 
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
-  const fetchLiveData = async () => {
+  const fetchLiveData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -34,17 +35,18 @@ export const LandingPage: React.FC = () => {
       ]);
       setServices(servicesData);
       setCenters(centersData);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to load services or centers:', err);
-      setError('Unable to load live catalog from backend. Please verify the .NET backend is running.');
+      const errorMsg = axios.isAxiosError(err) ? err.response?.data?.message : undefined;
+      setError(errorMsg ?? 'Unable to load live catalog from backend. Please verify the .NET backend is running.');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchLiveData();
-  }, []);
+  }, [fetchLiveData]);
 
   const faqs = [
     {

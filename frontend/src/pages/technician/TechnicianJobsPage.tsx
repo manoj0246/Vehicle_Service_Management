@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
 import {
   Wrench,
   Clock,
@@ -31,33 +32,33 @@ export const TechnicianJobsPage: React.FC = () => {
   const [cancellingJobId, setCancellingJobId] = useState<number | null>(null);
   const [cancelReason, setCancelReason] = useState<string>('');
 
-  const fetchJobs = async () => {
-    setLoading(true);
-    setError(null);
+  const fetchJobs = useCallback(async () => {
     try {
       const data = await technicianApi.getAssignedJobs();
       setJobs(data);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to fetch assigned service jobs.');
+    } catch (err: unknown) {
+      const message = axios.isAxiosError(err) ? err.response?.data?.message : undefined;
+      setError(message ?? 'Failed to fetch assigned service jobs.');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchJobs();
-  }, []);
+  }, [fetchJobs]);
 
   const handleStartJob = async (jobId: number) => {
     setActionLoading(jobId);
     try {
       await technicianApi.updateJobStatus(jobId, {
         status: 'InProgress',
-        notes: 'Technician started service inspection',
+        notes: undefined,
       });
       await fetchJobs();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to start service job.');
+    } catch (err: unknown) {
+      const message = axios.isAxiosError(err) ? err.response?.data?.message : undefined;
+      setError(message ?? 'Failed to start service job.');
     } finally {
       setActionLoading(null);
     }
@@ -71,13 +72,14 @@ export const TechnicianJobsPage: React.FC = () => {
     try {
       await technicianApi.updateJobStatus(completingJobId, {
         status: 'Completed',
-        notes: workNotes.trim() || 'Service completed successfully according to checklist.',
+        notes: workNotes.trim() ? workNotes.trim() : undefined,
       });
       setCompletingJobId(null);
       setWorkNotes('');
       await fetchJobs();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to complete job.');
+    } catch (err: unknown) {
+      const message = axios.isAxiosError(err) ? err.response?.data?.message : undefined;
+      setError(message ?? 'Failed to complete job.');
     } finally {
       setActionLoading(null);
     }
@@ -91,13 +93,14 @@ export const TechnicianJobsPage: React.FC = () => {
     try {
       await technicianApi.updateJobStatus(cancellingJobId, {
         status: 'Cancelled',
-        notes: cancelReason.trim() || 'Technician reported an issue with the service booking.',
+        notes: cancelReason.trim() ? cancelReason.trim() : undefined,
       });
       setCancellingJobId(null);
       setCancelReason('');
       await fetchJobs();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to cancel job.');
+    } catch (err: unknown) {
+      const message = axios.isAxiosError(err) ? err.response?.data?.message : undefined;
+      setError(message ?? 'Failed to cancel job.');
     } finally {
       setActionLoading(null);
     }

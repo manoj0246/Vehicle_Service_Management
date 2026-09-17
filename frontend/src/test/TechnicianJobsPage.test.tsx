@@ -3,8 +3,9 @@ import { BrowserRouter } from 'react-router-dom';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { TechnicianJobsPage } from '../pages/technician/TechnicianJobsPage';
 import { technicianApi } from '../api/technicianApi';
+import type { BookingResponse } from '../types/booking';
 
-const mockJobs = [
+const mockJobs: BookingResponse[] = [
   {
     id: 201,
     customerId: 1,
@@ -63,14 +64,14 @@ describe('TechnicianJobsPage', () => {
     expect(screen.getByText('Assigned Service Jobs')).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(screen.getByText('Full Engine Diagnostic')).toBeInTheDocument();
-      expect(screen.getByText('Wheel Alignment & Balancing')).toBeInTheDocument();
       expect(screen.getByText('Amit Verma')).toBeInTheDocument();
+      expect(screen.getByText('Tata Nexon')).toBeInTheDocument();
       expect(screen.getByText('KA 05 MN 4321')).toBeInTheDocument();
+      expect(screen.getByText('Sneha Rao')).toBeInTheDocument();
     });
   });
 
-  it('filters jobs using search input', async () => {
+  it('filters jobs when clicking tab filters', async () => {
     render(
       <BrowserRouter>
         <TechnicianJobsPage />
@@ -78,17 +79,18 @@ describe('TechnicianJobsPage', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Tata Nexon')).toBeInTheDocument();
+      expect(screen.getByText('Amit Verma')).toBeInTheDocument();
+      expect(screen.getByText('Sneha Rao')).toBeInTheDocument();
     });
 
-    const searchInput = screen.getByPlaceholderText(/Search vehicle, plate, or customer/i);
-    fireEvent.change(searchInput, { target: { value: 'Brezza' } });
+    const inProgressTab = screen.getByRole('button', { name: /In Progress/i });
+    fireEvent.click(inProgressTab);
 
-    expect(screen.queryByText('Tata Nexon')).not.toBeInTheDocument();
-    expect(screen.getByText('Maruti Brezza')).toBeInTheDocument();
+    expect(screen.queryByText('Amit Verma')).not.toBeInTheDocument();
+    expect(screen.getByText('Sneha Rao')).toBeInTheDocument();
   });
 
-  it('allows starting a service inspection', async () => {
+  it('allows starting a confirmed job without wiping customer notes', async () => {
     render(
       <BrowserRouter>
         <TechnicianJobsPage />
@@ -99,12 +101,13 @@ describe('TechnicianJobsPage', () => {
       expect(screen.getByText('Start Inspection')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('Start Inspection'));
+    const startButton = screen.getByText('Start Inspection');
+    fireEvent.click(startButton);
 
     await waitFor(() => {
       expect(technicianApi.updateJobStatus).toHaveBeenCalledWith(201, {
         status: 'InProgress',
-        notes: 'Technician started service inspection',
+        notes: undefined,
       });
     });
   });
@@ -120,21 +123,22 @@ describe('TechnicianJobsPage', () => {
       expect(screen.getByText('Report Issue')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('Report Issue'));
+    const reportButton = screen.getByText('Report Issue');
+    fireEvent.click(reportButton);
 
-    expect(screen.getByText('Report Issue / Cancel Job')).toBeInTheDocument();
+    expect(screen.getByText(/Report Issue \/ Cancel Job/i)).toBeInTheDocument();
 
-    const textarea = screen.getByPlaceholderText(/e\.g\. Parts unavailable/i);
-    fireEvent.change(textarea, { target: { value: 'Required replacement sensor out of stock.' } });
+    const textarea = screen.getByPlaceholderText(/Parts unavailable/i);
+    fireEvent.change(textarea, { target: { value: 'Engine spare part unavailable' } });
 
-    fireEvent.click(screen.getByText('Confirm Cancellation'));
+    const confirmCancelBtn = screen.getByRole('button', { name: /Confirm Cancellation/i });
+    fireEvent.click(confirmCancelBtn);
 
     await waitFor(() => {
       expect(technicianApi.updateJobStatus).toHaveBeenCalledWith(201, {
         status: 'Cancelled',
-        notes: 'Required replacement sensor out of stock.',
+        notes: 'Engine spare part unavailable',
       });
     });
   });
 });
-

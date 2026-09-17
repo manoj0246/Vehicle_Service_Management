@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { 
@@ -84,17 +85,22 @@ export const BookServicePage: React.FC = () => {
         }
 
         if (centersData.length > 0) {
-          setSelectedCenterId(centersData[0].id);
-        }
-
-        if (servicesData.length > 0) {
+          const initialCenterId = centersData[0].id;
+          setSelectedCenterId(initialCenterId);
+          const matchingServices = servicesData.filter((s) => s.centerId === initialCenterId);
+          if (matchingServices.length > 0) {
+            setSelectedServiceId(matchingServices[0].id);
+          } else if (servicesData.length > 0) {
+            setSelectedServiceId(servicesData[0].id);
+          }
+        } else if (servicesData.length > 0) {
           setSelectedServiceId(servicesData[0].id);
         }
 
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
         setScheduledDate(tomorrow.toISOString().split('T')[0]);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Error loading booking data:', err);
         setError('Failed to load centers or vehicles. Please check backend connection.');
       } finally {
@@ -127,8 +133,9 @@ export const BookServicePage: React.FC = () => {
       setNewPlate('');
       setCustomMake('');
       setNewMake('Maruti Suzuki');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to add car');
+    } catch (err: unknown) {
+      const errorMsg = axios.isAxiosError(err) ? err.response?.data?.message : undefined;
+      setError(errorMsg ?? 'Failed to add car');
     }
   };
 
@@ -151,12 +158,29 @@ export const BookServicePage: React.FC = () => {
         notes: notes.trim(),
       });
       navigate('/appointments');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to schedule booking. Please try another time slot.');
+    } catch (err: unknown) {
+      const errorMsg = axios.isAxiosError(err) ? err.response?.data?.message : undefined;
+      setError(errorMsg ?? 'Failed to schedule booking. Please try another time slot.');
     } finally {
       setSubmitting(false);
     }
   };
+
+  const handleSelectCenter = (centerId: number) => {
+    setSelectedCenterId(centerId);
+    const matching = services.filter((s) => s.centerId === centerId);
+    if (matching.length > 0) {
+      if (!matching.some((s) => s.id === Number(selectedServiceId))) {
+        setSelectedServiceId(matching[0].id);
+      }
+    } else {
+      setSelectedServiceId('');
+    }
+  };
+
+  const availableServices = selectedCenterId
+    ? services.filter((s) => s.centerId === Number(selectedCenterId))
+    : services;
 
   const selectedService = services.find((s) => s.id === Number(selectedServiceId));
 
@@ -329,7 +353,7 @@ export const BookServicePage: React.FC = () => {
               {centers.map((c) => (
                 <div
                   key={c.id}
-                  onClick={() => setSelectedCenterId(c.id)}
+                  onClick={() => handleSelectCenter(c.id)}
                   className={`p-4 rounded-2xl border transition cursor-pointer flex items-start justify-between ${
                     selectedCenterId === c.id
                       ? 'bg-blue-50/70 border-blue-500 shadow-xs'
@@ -360,39 +384,47 @@ export const BookServicePage: React.FC = () => {
               <h3 className="font-bold text-slate-900 text-base">Select Service Package</h3>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {services.map((s) => (
-                <div
-                  key={s.id}
-                  onClick={() => setSelectedServiceId(s.id)}
-                  className={`p-4 rounded-2xl border transition cursor-pointer flex flex-col justify-between ${
-                    selectedServiceId === s.id
-                      ? 'bg-blue-50/70 border-blue-500 shadow-xs'
-                      : 'bg-white border-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-start">
-                      <h4 className="font-bold text-sm text-slate-900 leading-snug">{s.name}</h4>
-                      {selectedServiceId === s.id && (
-                        <CheckCircle2 className="h-5 w-5 text-blue-600 shrink-0 ml-2" />
-                      )}
+            {availableServices.length === 0 ? (
+              <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl text-center">
+                <p className="text-xs font-semibold text-slate-600">
+                  No service packages currently configured for this workshop center. Please select another workshop center or check back soon.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {availableServices.map((s) => (
+                  <div
+                    key={s.id}
+                    onClick={() => setSelectedServiceId(s.id)}
+                    className={`p-4 rounded-2xl border transition cursor-pointer flex flex-col justify-between ${
+                      selectedServiceId === s.id
+                        ? 'bg-blue-50/70 border-blue-500 shadow-xs'
+                        : 'bg-white border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-start">
+                        <h4 className="font-bold text-sm text-slate-900 leading-snug">{s.name}</h4>
+                        {selectedServiceId === s.id && (
+                          <CheckCircle2 className="h-5 w-5 text-blue-600 shrink-0 ml-2" />
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-500 line-clamp-2">{s.description}</p>
                     </div>
-                    <p className="text-xs text-slate-500 line-clamp-2">{s.description}</p>
-                  </div>
 
-                  <div className="pt-3 mt-3 border-t border-slate-100/80 flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-1 text-slate-500">
-                      <Clock className="h-3.5 w-3.5 text-blue-600" />
-                      <span>{s.durationMinutes} mins</span>
-                    </div>
-                    <div className="text-base font-black text-slate-900">
-                      ₹{Number(s.price).toLocaleString('en-IN')}
+                    <div className="pt-3 mt-3 border-t border-slate-100/80 flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-1 text-slate-500">
+                        <Clock className="h-3.5 w-3.5 text-blue-600" />
+                        <span>{s.durationMinutes} mins</span>
+                      </div>
+                      <div className="text-base font-black text-slate-900">
+                        ₹{Number(s.price).toLocaleString('en-IN')}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="space-y-4 pt-6 border-t border-slate-100">

@@ -3,6 +3,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { TechnicianDashboardPage } from '../pages/technician/TechnicianDashboardPage';
 import { technicianApi } from '../api/technicianApi';
+import type { BookingResponse } from '../types/booking';
 
 const mockStats = {
   totalBookings: 8,
@@ -14,7 +15,7 @@ const mockStats = {
   recentBookings: [],
 };
 
-const mockTodayJobs = [
+const mockTodayJobs: BookingResponse[] = [
   {
     id: 101,
     customerId: 1,
@@ -74,13 +75,14 @@ describe('TechnicianDashboardPage', () => {
     expect(screen.getByText('Technician Dashboard')).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(screen.getByText('Periodic Maintenance')).toBeInTheDocument();
-      expect(screen.getByText('Brake Inspection')).toBeInTheDocument();
-      expect(screen.getByText('Hyundai Creta (MH 12 AB 1234)')).toBeInTheDocument();
+      expect(screen.getByText('Rahul Sharma')).toBeInTheDocument();
+      expect(screen.getByText('Hyundai Creta')).toBeInTheDocument();
+      expect(screen.getByText('Pooja Patel')).toBeInTheDocument();
+      expect(screen.getByText('Honda City')).toBeInTheDocument();
     });
   });
 
-  it('allows technician to start a confirmed job', async () => {
+  it('allows technician to start a confirmed job without destroying customer note', async () => {
     render(
       <BrowserRouter>
         <TechnicianDashboardPage />
@@ -88,15 +90,16 @@ describe('TechnicianDashboardPage', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Start Job')).toBeInTheDocument();
+      expect(screen.getByText('Start Inspection')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('Start Job'));
+    const startBtn = screen.getByText('Start Inspection');
+    fireEvent.click(startBtn);
 
     await waitFor(() => {
       expect(technicianApi.updateJobStatus).toHaveBeenCalledWith(101, {
         status: 'InProgress',
-        notes: 'Technician started service inspection',
+        notes: undefined,
       });
     });
   });
@@ -109,24 +112,28 @@ describe('TechnicianDashboardPage', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Complete')).toBeInTheDocument();
+      expect(screen.getByText('Complete Job')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('Complete'));
+    const completeBtn = screen.getByText('Complete Job');
+    fireEvent.click(completeBtn);
 
-    expect(screen.getByText('Mark Service as Completed')).toBeInTheDocument();
+    expect(screen.getByText(/Complete Service Job #102/i)).toBeInTheDocument();
 
-    const textarea = screen.getByPlaceholderText(/e\.g\. Completed 40-point inspection/i);
-    fireEvent.change(textarea, { target: { value: 'Brake pads replaced and tested.' } });
+    const textarea = screen.getByPlaceholderText(/Summarize work completed/i);
+    fireEvent.change(textarea, { target: { value: 'Brake pads replaced and discs skimmed' } });
 
-    fireEvent.click(screen.getByText('Confirm Completion'));
+    const partsInput = screen.getByPlaceholderText(/e.g. Front brake pads/i);
+    fireEvent.change(partsInput, { target: { value: 'OEM Bosch Front Pads' } });
+
+    const confirmBtn = screen.getByRole('button', { name: /Confirm Job Completion/i });
+    fireEvent.click(confirmBtn);
 
     await waitFor(() => {
       expect(technicianApi.updateJobStatus).toHaveBeenCalledWith(102, {
         status: 'Completed',
-        notes: 'Brake pads replaced and tested.',
+        notes: 'Brake pads replaced and discs skimmed | Parts: OEM Bosch Front Pads',
       });
     });
   });
 });
-

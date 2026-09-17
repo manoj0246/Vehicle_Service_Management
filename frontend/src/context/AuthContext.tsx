@@ -75,7 +75,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (savedUserStr) {
           try {
             parsedUser = JSON.parse(savedUserStr);
-          } catch {
+          } catch (_e) {
+            void _e;
           }
         }
 

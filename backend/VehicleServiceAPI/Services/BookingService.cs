@@ -243,7 +243,7 @@ namespace VehicleServiceAPI.Services
             return booking.Status;
         }
 
-        public async Task<IEnumerable<BookingResponseDto>> GetAllBookingsAsync(BookingFilterDto filters)
+        public async Task<IEnumerable<BookingResponseDto>> GetAllBookingsAsync(BookingFilterDto filters, int? centerId = null)
         {
             IQueryable<ServiceRequest> query = _context.ServiceRequests
                 .Include(sr => sr.Customer)
@@ -251,6 +251,9 @@ namespace VehicleServiceAPI.Services
                 .Include(sr => sr.Service)
                 .Include(sr => sr.Technician)
                 .ThenInclude(t => t.User);
+
+            if (centerId.HasValue)
+                query = query.Where(sr => sr.Service.CenterId == centerId.Value);
 
             if (filters.FromDate.HasValue)
             {

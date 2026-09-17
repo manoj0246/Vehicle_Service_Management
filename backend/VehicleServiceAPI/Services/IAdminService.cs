@@ -6,8 +6,9 @@ namespace VehicleServiceAPI.Services
     {
         Task<DashboardStatsDto> GetDashboardStatsAsync(int? centerId = null);
 
-        Task<IEnumerable<UserManagementDto>> GetAllUsersAsync();
+        Task<IEnumerable<UserManagementDto>> GetAllUsersAsync(int? centerId = null, int? currentUserId = null);
         Task<UserManagementDto> GetUserByIdAsync(int userId);
+        Task<UserManagementDto> CreateAdminAsync(CreateAdminDto createDto);
         Task<bool> UpdateUserRoleAsync(int userId, UpdateUserRoleDto roleDto);
 
         Task<IEnumerable<TechnicianManagementDto>> GetAllTechniciansAsync(int? centerId = null);

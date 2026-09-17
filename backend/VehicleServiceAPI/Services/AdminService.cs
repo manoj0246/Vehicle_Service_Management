@@ -108,13 +108,32 @@ namespace VehicleServiceAPI.Services
             return bookings;
         }
 
-        public async Task<IEnumerable<UserManagementDto>> GetAllUsersAsync()
+        public async Task<IEnumerable<UserManagementDto>> GetAllUsersAsync(int? centerId = null, int? currentUserId = null)
         {
-            var users = await _context.Users
+            var query = _context.Users
                 .Include(u => u.Technician)
                 .ThenInclude(t => t.Center)
+                .Include(u => u.ServiceRequests)
+                .ThenInclude(sr => sr.Service)
                 .Where(u => !u.IsDeleted)
-                .ToListAsync();
+                .AsQueryable();
+
+            if (centerId.HasValue)
+            {
+                query = query.Where(u =>
+                    u.Id == currentUserId ||
+                    (
+                        u.Role != "SuperAdmin" && u.Role != "Admin" &&
+                        (
+                            u.CenterId == centerId.Value ||
+                            (u.Technician != null && u.Technician.CenterId == centerId.Value) ||
+                            u.ServiceRequests.Any(sr => sr.Service != null && sr.Service.CenterId == centerId.Value)
+                        )
+                    )
+                );
+            }
+
+            var users = await query.ToListAsync();
 
             var centers = await _context.ServiceCenters.ToDictionaryAsync(c => c.Id, c => c.Name);
 
@@ -124,7 +143,7 @@ namespace VehicleServiceAPI.Services
                 Name = u.Name,
                 Email = u.Email,
                 Role = u.Role,
-                CenterId = u.CenterId,
+                CenterId = u.CenterId ?? u.Technician?.CenterId,
                 CenterName = u.Technician?.Center?.Name ?? (u.CenterId.HasValue && centers.ContainsKey(u.CenterId.Value) ? centers[u.CenterId.Value] : null),
                 CreatedAt = u.CreatedAt,
                 IsDeleted = u.IsDeleted
@@ -156,6 +175,48 @@ namespace VehicleServiceAPI.Services
                 Role = user.Role,
                 CenterId = user.CenterId,
                 CenterName = centerName,
+                CreatedAt = user.CreatedAt,
+                IsDeleted = user.IsDeleted
+            };
+        }
+
+        public async Task<UserManagementDto> CreateAdminAsync(CreateAdminDto createDto)
+        {
+            var existingUser = await _context.Users
+                .FirstOrDefaultAsync(u => u.Email == createDto.Email);
+
+            if (existingUser != null)
+                throw new InvalidOperationException($"User with email {createDto.Email} already exists");
+
+            var center = await _context.ServiceCenters
+                .FirstOrDefaultAsync(c => c.Id == createDto.CenterId && !c.IsDeleted);
+
+            if (center == null)
+                throw new KeyNotFoundException($"Service center with ID {createDto.CenterId} not found");
+
+            var user = new User
+            {
+                Name = createDto.Name,
+                Email = createDto.Email,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(createDto.Password),
+                Role = "Admin",
+                CenterId = createDto.CenterId,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation($"Admin user {user.Email} created and assigned to center {center.Name} (ID: {center.Id})");
+
+            return new UserManagementDto
+            {
+                Id = user.Id,
+                Name = user.Name,
+                Email = user.Email,
+                Role = user.Role,
+                CenterId = user.CenterId,
+                CenterName = center.Name,
                 CreatedAt = user.CreatedAt,
                 IsDeleted = user.IsDeleted
             };

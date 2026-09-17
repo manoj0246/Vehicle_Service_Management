@@ -12,7 +12,11 @@ import {
   PhoneCall,
   LayoutDashboard,
   ClipboardList,
-  Clock
+  Clock,
+  Building2,
+  Users,
+  ShieldAlert,
+  Layers,
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
@@ -41,6 +45,15 @@ export const Navbar: React.FC = () => {
 
   const isTechnician = user?.role === 'Technician';
   const isAdmin = user?.role === 'Admin' || user?.role === 'SuperAdmin';
+  const isSuperAdmin = user?.role === 'SuperAdmin';
+
+  const brandLink = isAdmin
+    ? '/admin/dashboard'
+    : isTechnician
+    ? '/technician/dashboard'
+    : isAuthenticated
+    ? '/vehicles'
+    : '/';
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
@@ -58,7 +71,7 @@ export const Navbar: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <Link to={isTechnician ? "/technician/dashboard" : "/"} className="flex items-center gap-2.5">
+          <Link to={brandLink} className="flex items-center gap-2.5">
             <div className="h-9 w-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-sm">
               <Wrench className="h-4.5 w-4.5" />
             </div>
@@ -72,8 +85,41 @@ export const Navbar: React.FC = () => {
             </div>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-6 text-sm font-semibold text-slate-700">
-            {isAuthenticated && isTechnician ? (
+          <nav className="hidden md:flex items-center gap-5 text-sm font-semibold text-slate-700">
+            {isAuthenticated && isAdmin ? (
+              <>
+                <Link to="/admin/dashboard" className="hover:text-blue-600 transition flex items-center gap-1.5 font-bold text-blue-700">
+                  <LayoutDashboard className="h-4 w-4 text-blue-600" />
+                  <span>Dashboard</span>
+                </Link>
+                <Link to="/admin/bookings" className="hover:text-blue-600 transition flex items-center gap-1.5">
+                  <Calendar className="h-4 w-4 text-slate-500" />
+                  <span>Bookings</span>
+                </Link>
+                <Link to="/admin/technicians" className="hover:text-blue-600 transition flex items-center gap-1.5">
+                  <Wrench className="h-4 w-4 text-slate-500" />
+                  <span>Technicians</span>
+                </Link>
+                <Link to="/admin/centers" className="hover:text-blue-600 transition flex items-center gap-1.5">
+                  <Building2 className="h-4 w-4 text-slate-500" />
+                  <span>Centers</span>
+                </Link>
+                <Link to="/admin/services" className="hover:text-blue-600 transition flex items-center gap-1.5">
+                  <Layers className="h-4 w-4 text-slate-500" />
+                  <span>Services</span>
+                </Link>
+                <Link to="/admin/users" className="hover:text-blue-600 transition flex items-center gap-1.5">
+                  <Users className="h-4 w-4 text-slate-500" />
+                  <span>Users</span>
+                </Link>
+                {isSuperAdmin && (
+                  <Link to="/admin/audit-logs" className="hover:text-purple-600 transition flex items-center gap-1.5 text-purple-700">
+                    <ShieldAlert className="h-4 w-4 text-purple-600" />
+                    <span>Audit Logs</span>
+                  </Link>
+                )}
+              </>
+            ) : isAuthenticated && isTechnician ? (
               <>
                 <Link to="/technician/dashboard" className="hover:text-blue-600 transition flex items-center gap-1.5 font-bold text-amber-700">
                   <LayoutDashboard className="h-4 w-4 text-amber-600" />
@@ -90,9 +136,6 @@ export const Navbar: React.FC = () => {
               </>
             ) : isAuthenticated && !isTechnician && !isAdmin ? (
               <>
-                <Link to="/" className="hover:text-blue-600 transition">
-                  Home
-                </Link>
                 <Link to="/vehicles" className="hover:text-blue-600 transition flex items-center gap-1.5">
                   <Car className="h-4 w-4 text-slate-500" />
                   <span>My Garage</span>
@@ -130,9 +173,11 @@ export const Navbar: React.FC = () => {
                   </div>
                   <div>
                     <div className="text-xs font-bold text-slate-900 leading-tight">{user.name}</div>
-                    <span className={`inline-block px-1.5 py-0.2 text-[9px] font-bold rounded border ${getRoleBadgeColor(user.role)}`}>
-                      {user.role}
-                    </span>
+                    {user.role !== 'Customer' && (
+                      <span className={`inline-block px-1.5 py-0.2 text-[9px] font-bold rounded border ${getRoleBadgeColor(user.role)}`}>
+                        {user.role}
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -180,7 +225,61 @@ export const Navbar: React.FC = () => {
         <div className="md:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-5 space-y-2 shadow-lg">
           {isAuthenticated ? (
             <>
-              {isTechnician ? (
+              {isAdmin ? (
+                <>
+                  <Link
+                    to="/admin/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-lg text-sm font-bold text-blue-700 hover:bg-blue-50"
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    to="/admin/bookings"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    Bookings Queue
+                  </Link>
+                  <Link
+                    to="/admin/technicians"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    Technicians
+                  </Link>
+                  <Link
+                    to="/admin/centers"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    Workshop Centers
+                  </Link>
+                  <Link
+                    to="/admin/services"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    Workshop Services
+                  </Link>
+                  <Link
+                    to="/admin/users"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    User Accounts
+                  </Link>
+                  {isSuperAdmin && (
+                    <Link
+                      to="/admin/audit-logs"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block px-3 py-2 rounded-lg text-sm font-semibold text-purple-700 hover:bg-purple-50"
+                    >
+                      System Audit Logs
+                    </Link>
+                  )}
+                </>
+              ) : isTechnician ? (
                 <>
                   <Link
                     to="/technician/dashboard"
@@ -206,13 +305,6 @@ export const Navbar: React.FC = () => {
                 </>
               ) : (
                 <>
-                  <Link
-                    to="/"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                  >
-                    Home
-                  </Link>
                   <Link
                     to="/vehicles"
                     onClick={() => setMobileMenuOpen(false)}

@@ -7,7 +7,11 @@ import {
   LayoutDashboard,
   ClipboardList,
   Clock,
-  ShieldCheck
+  ShieldCheck,
+  Building2,
+  Users,
+  ShieldAlert,
+  Calendar,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -15,6 +19,8 @@ import { useAuth } from '../context/AuthContext';
 export const Footer: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const isTechnician = user?.role === 'Technician';
+  const isAdmin = user?.role === 'Admin' || user?.role === 'SuperAdmin';
+  const isSuperAdmin = user?.role === 'SuperAdmin';
 
   return (
     <footer className="bg-slate-950 text-slate-400 text-sm border-t border-slate-800">
@@ -34,7 +40,63 @@ export const Footer: React.FC = () => {
             </p>
           </div>
 
-          {isTechnician ? (
+          {isAdmin ? (
+            <>
+              <div>
+                <h4 className="text-white font-bold text-xs tracking-wider uppercase mb-3">Admin Operations</h4>
+                <ul className="space-y-2 text-xs">
+                  <li>
+                    <Link to="/admin/dashboard" className="hover:text-white transition flex items-center gap-1.5">
+                      <LayoutDashboard className="h-3.5 w-3.5 text-blue-400" />
+                      <span>Analytics Dashboard</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/admin/bookings" className="hover:text-white transition flex items-center gap-1.5">
+                      <Calendar className="h-3.5 w-3.5 text-blue-400" />
+                      <span>Bookings Queue</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/admin/technicians" className="hover:text-white transition flex items-center gap-1.5">
+                      <Wrench className="h-3.5 w-3.5 text-blue-400" />
+                      <span>Technician Staff</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/admin/centers" className="hover:text-white transition flex items-center gap-1.5">
+                      <Building2 className="h-3.5 w-3.5 text-blue-400" />
+                      <span>Workshop Centers</span>
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="text-white font-bold text-xs tracking-wider uppercase mb-3">System Control</h4>
+                <ul className="space-y-2 text-xs text-slate-400">
+                  <li>
+                    <Link to="/admin/users" className="hover:text-white transition flex items-center gap-1.5">
+                      <Users className="h-3.5 w-3.5 text-emerald-400" />
+                      <span>User Role Management</span>
+                    </Link>
+                  </li>
+                  {isSuperAdmin && (
+                    <li>
+                      <Link to="/admin/audit-logs" className="hover:text-white transition flex items-center gap-1.5">
+                        <ShieldAlert className="h-3.5 w-3.5 text-purple-400" />
+                        <span>System Audit Logs</span>
+                      </Link>
+                    </li>
+                  )}
+                  <li className="flex items-center gap-1.5 text-slate-500 pt-1">
+                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
+                    <span>Multi-Branch RBAC Active</span>
+                  </li>
+                </ul>
+              </div>
+            </>
+          ) : isTechnician ? (
             <>
               <div>
                 <h4 className="text-white font-bold text-xs tracking-wider uppercase mb-3">Technician Workspace</h4>

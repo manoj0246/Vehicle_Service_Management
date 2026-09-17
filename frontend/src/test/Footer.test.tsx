@@ -57,4 +57,34 @@ describe('Footer Component', () => {
     expect(screen.getByText('Workshop Standards')).toBeInTheDocument();
     expect(screen.queryByText('Customer Portal')).not.toBeInTheDocument();
   });
+
+  it('renders admin operations and system control links for Admin role', () => {
+    vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
+      user: {
+        id: 99,
+        name: 'Super Admin',
+        email: 'superadmin@autocare.in',
+        role: 'SuperAdmin',
+        centerId: null,
+      },
+      token: 'mock-superadmin-token',
+      isAuthenticated: true,
+      isLoading: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+    });
+
+    render(
+      <BrowserRouter>
+        <Footer />
+      </BrowserRouter>
+    );
+
+    expect(screen.getByText('Admin Operations')).toBeInTheDocument();
+    expect(screen.getByText('System Control')).toBeInTheDocument();
+    expect(screen.getByText('Analytics Dashboard')).toBeInTheDocument();
+    expect(screen.getByText('User Role Management')).toBeInTheDocument();
+    expect(screen.queryByText('Customer Portal')).not.toBeInTheDocument();
+  });
 });

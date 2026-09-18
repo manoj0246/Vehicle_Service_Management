@@ -29,7 +29,7 @@ describe('Navbar Component', () => {
     expect(screen.queryByText('My Bookings')).not.toBeInTheDocument();
   });
 
-  it('renders customer links and profile badge when user is logged in', () => {
+  it('renders customer links and profile badge when user is logged in as Customer', () => {
     vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
       user: {
         id: 1,
@@ -57,5 +57,36 @@ describe('Navbar Component', () => {
     expect(screen.getByText('Rahul Sharma')).toBeInTheDocument();
     expect(screen.getByText('Customer')).toBeInTheDocument();
     expect(screen.getByTitle('Sign out')).toBeInTheDocument();
+  });
+
+  it('renders technician navigation links when logged in as Technician', () => {
+    vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
+      user: {
+        id: 5,
+        name: 'Vikram Singh',
+        email: 'technician@autocare.in',
+        role: 'Technician',
+        centerId: 1,
+      },
+      token: 'mock-tech-token',
+      isAuthenticated: true,
+      isLoading: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+    });
+
+    render(
+      <BrowserRouter>
+        <Navbar />
+      </BrowserRouter>
+    );
+
+    expect(screen.getByText('Dashboard')).toBeInTheDocument();
+    expect(screen.getByText('Job Queue')).toBeInTheDocument();
+    expect(screen.getByText('My Schedule')).toBeInTheDocument();
+    expect(screen.getByText('Vikram Singh')).toBeInTheDocument();
+    expect(screen.getByText('Technician')).toBeInTheDocument();
+    expect(screen.queryByText('My Garage')).not.toBeInTheDocument();
   });
 });

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -31,13 +32,25 @@ export const LoginPage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      await login({ email, password });
-      navigate(redirectUrl);
-    } catch (err: any) {
-      if (err.response?.data?.message) {
-        setError(err.response.data.message);
-      } else if (err.code === 'ERR_NETWORK' || !err.response) {
-        setError('Cannot connect to backend server. Please ensure the .NET API is running on http://localhost:5052.');
+      const loggedInUser = await login({ email, password });
+      if (searchParams.get('redirect')) {
+        navigate(searchParams.get('redirect')!);
+      } else if (loggedInUser.role === 'Technician') {
+        navigate('/technician/dashboard');
+      } else if (loggedInUser.role === 'Admin' || loggedInUser.role === 'SuperAdmin') {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/vehicles');
+      }
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        if (err.response?.data?.message) {
+          setError(err.response.data.message);
+        } else if (err.code === 'ERR_NETWORK' || !err.response) {
+          setError('Cannot connect to backend server. Please ensure the .NET API is running on http://localhost:5052.');
+        } else {
+          setError('Invalid email or password. Please check your credentials.');
+        }
       } else {
         setError('Invalid email or password. Please check your credentials.');
       }

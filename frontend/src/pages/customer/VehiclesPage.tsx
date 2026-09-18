@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { 
@@ -39,18 +40,19 @@ export const VehiclesPage: React.FC = () => {
     'Renault', 'Nissan', 'BMW', 'Mercedes-Benz', 'Audi', 'Other'
   ];
 
-  const fetchVehicles = async () => {
+  const fetchVehicles = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const data = await getMyVehicles();
       setVehicles(data);
-    } catch (err: any) {
-      setError('Failed to fetch your registered vehicles. Please check backend connection.');
+    } catch (err: unknown) {
+      const errorMsg = axios.isAxiosError(err) ? err.response?.data?.message : undefined;
+      setError(errorMsg ?? 'Failed to fetch your registered vehicles. Please check backend connection.');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (isLoading) return;
@@ -59,7 +61,7 @@ export const VehiclesPage: React.FC = () => {
       return;
     }
     fetchVehicles();
-  }, [isAuthenticated, isLoading, navigate]);
+  }, [isAuthenticated, isLoading, navigate, fetchVehicles]);
 
   const handleAddVehicle = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,8 +88,9 @@ export const VehiclesPage: React.FC = () => {
       setCustomMake('');
       setMake('Maruti Suzuki');
       await fetchVehicles();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to add vehicle. Check license plate format.');
+    } catch (err: unknown) {
+      const errorMsg = axios.isAxiosError(err) ? err.response?.data?.message : undefined;
+      setError(errorMsg ?? 'Failed to add vehicle. Check license plate format.');
     } finally {
       setIsSubmitting(false);
     }
@@ -101,8 +104,9 @@ export const VehiclesPage: React.FC = () => {
       await deleteVehicle(deleteVehicleId);
       setDeleteVehicleId(null);
       await fetchVehicles();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Cannot delete vehicle with active service requests.');
+    } catch (err: unknown) {
+      const errorMsg = axios.isAxiosError(err) ? err.response?.data?.message : undefined;
+      setError(errorMsg ?? 'Cannot delete vehicle with active service requests.');
     } finally {
       setIsDeleting(false);
     }

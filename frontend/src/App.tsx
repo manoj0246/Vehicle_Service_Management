@@ -13,6 +13,13 @@ import { AppointmentsPage } from './pages/customer/AppointmentsPage';
 import { TechnicianDashboardPage } from './pages/technician/TechnicianDashboardPage';
 import { TechnicianJobsPage } from './pages/technician/TechnicianJobsPage';
 import { TechnicianSchedulePage } from './pages/technician/TechnicianSchedulePage';
+import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
+import { AdminBookingsPage } from './pages/admin/AdminBookingsPage';
+import { AdminTechniciansPage } from './pages/admin/AdminTechniciansPage';
+import { AdminCentersPage } from './pages/admin/AdminCentersPage';
+import { AdminServicesPage } from './pages/admin/AdminServicesPage';
+import { AdminUsersPage } from './pages/admin/AdminUsersPage';
+import { AdminAuditLogsPage } from './pages/admin/AdminAuditLogsPage';
 
 export const App: React.FC = () => {
   return (
@@ -53,7 +60,7 @@ export const App: React.FC = () => {
               <Route
                 path="/technician/dashboard"
                 element={
-                  <ProtectedRoute allowedRoles={['Technician', 'Admin', 'SuperAdmin']}>
+                  <ProtectedRoute allowedRoles={['Technician']}>
                     <TechnicianDashboardPage />
                   </ProtectedRoute>
                 }
@@ -61,7 +68,7 @@ export const App: React.FC = () => {
               <Route
                 path="/technician/jobs"
                 element={
-                  <ProtectedRoute allowedRoles={['Technician', 'Admin', 'SuperAdmin']}>
+                  <ProtectedRoute allowedRoles={['Technician']}>
                     <TechnicianJobsPage />
                   </ProtectedRoute>
                 }
@@ -69,8 +76,64 @@ export const App: React.FC = () => {
               <Route
                 path="/technician/schedule"
                 element={
-                  <ProtectedRoute allowedRoles={['Technician', 'Admin', 'SuperAdmin']}>
+                  <ProtectedRoute allowedRoles={['Technician']}>
                     <TechnicianSchedulePage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={['Admin', 'SuperAdmin']}>
+                    <AdminDashboardPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/bookings"
+                element={
+                  <ProtectedRoute allowedRoles={['Admin', 'SuperAdmin']}>
+                    <AdminBookingsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/technicians"
+                element={
+                  <ProtectedRoute allowedRoles={['Admin', 'SuperAdmin']}>
+                    <AdminTechniciansPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/centers"
+                element={
+                  <ProtectedRoute allowedRoles={['Admin', 'SuperAdmin']}>
+                    <AdminCentersPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/services"
+                element={
+                  <ProtectedRoute allowedRoles={['Admin', 'SuperAdmin']}>
+                    <AdminServicesPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/users"
+                element={
+                  <ProtectedRoute allowedRoles={['Admin', 'SuperAdmin']}>
+                    <AdminUsersPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/audit-logs"
+                element={
+                  <ProtectedRoute allowedRoles={['SuperAdmin']}>
+                    <AdminAuditLogsPage />
                   </ProtectedRoute>
                 }
               />

@@ -55,7 +55,8 @@ describe('Navbar Component', () => {
     expect(screen.getByText('My Garage')).toBeInTheDocument();
     expect(screen.getByText('My Bookings')).toBeInTheDocument();
     expect(screen.getByText('Rahul Sharma')).toBeInTheDocument();
-    expect(screen.getByText('Customer')).toBeInTheDocument();
+    expect(screen.queryByText('Customer')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /^home$/i })).not.toBeInTheDocument();
     expect(screen.getByTitle('Sign out')).toBeInTheDocument();
   });
 
@@ -88,5 +89,36 @@ describe('Navbar Component', () => {
     expect(screen.getByText('Vikram Singh')).toBeInTheDocument();
     expect(screen.getByText('Technician')).toBeInTheDocument();
     expect(screen.queryByText('My Garage')).not.toBeInTheDocument();
+  });
+
+  it('renders admin navigation links when logged in as Admin or SuperAdmin', () => {
+    vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
+      user: {
+        id: 99,
+        name: 'Super Admin',
+        email: 'superadmin@autocare.in',
+        role: 'SuperAdmin',
+        centerId: null,
+      },
+      token: 'mock-superadmin-token',
+      isAuthenticated: true,
+      isLoading: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+    });
+
+    render(
+      <BrowserRouter>
+        <Navbar />
+      </BrowserRouter>
+    );
+
+    expect(screen.getByText('Dashboard')).toBeInTheDocument();
+    expect(screen.getByText('Bookings')).toBeInTheDocument();
+    expect(screen.getByText('Technicians')).toBeInTheDocument();
+    expect(screen.getByText('Centers')).toBeInTheDocument();
+    expect(screen.getByText('Users')).toBeInTheDocument();
+    expect(screen.getByText('Audit Logs')).toBeInTheDocument();
   });
 });

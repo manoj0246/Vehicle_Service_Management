@@ -96,7 +96,11 @@ namespace VehicleServiceAPI.Controllers
         {
             try
             {
-                var users = await _adminService.GetAllUsersAsync();
+                var role = GetCurrentUserRole();
+                int? centerId = role == "Admin" ? GetCurrentUserCenterId() : null;
+                int currentUserId = GetCurrentUserId();
+
+                var users = await _adminService.GetAllUsersAsync(centerId, currentUserId);
                 return Ok(new { success = true, count = users.Count(), data = users });
             }
             catch (Exception ex)
@@ -146,6 +150,34 @@ namespace VehicleServiceAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Error updating user role {id}");
+                return StatusCode(500, new { success = false, message = "An error occurred" });
+            }
+        }
+
+        [HttpPost("admins")]
+        [Authorize(Policy = "SuperAdminOnly")]
+        public async Task<IActionResult> CreateAdmin([FromBody] CreateAdminDto createDto)
+        {
+            try
+            {
+                var admin = await _adminService.CreateAdminAsync(createDto);
+                return CreatedAtAction(
+                    nameof(GetUserById),
+                    new { id = admin.Id },
+                    new { success = true, message = "Admin user created successfully", data = admin }
+                );
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { success = false, message = ex.Message });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { success = false, message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating admin user");
                 return StatusCode(500, new { success = false, message = "An error occurred" });
             }
         }
@@ -216,11 +248,26 @@ namespace VehicleServiceAPI.Controllers
         }
 
         [HttpPut("technicians/{id}")]
-        [Authorize(Policy = "SuperAdminOnly")]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> UpdateTechnician(int id, [FromBody] UpdateTechnicianDto updateDto)
         {
             try
             {
+                var role = GetCurrentUserRole();
+                if (role == "Admin")
+                {
+                    var adminCenterId = GetCurrentUserCenterId();
+                    var existingTech = await _adminService.GetTechnicianByIdAsync(id);
+                    if (existingTech.CenterId != adminCenterId)
+                    {
+                        return StatusCode(403, new { success = false, message = "Cannot edit technicians from other workshop centers" });
+                    }
+                    if (adminCenterId.HasValue)
+                    {
+                        updateDto.CenterId = adminCenterId.Value;
+                    }
+                }
+
                 var technician = await _adminService.UpdateTechnicianAsync(id, updateDto);
                 return Ok(new { success = true, message = "Technician updated successfully", data = technician });
             }

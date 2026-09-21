@@ -166,23 +166,21 @@ export const AdminDashboardPage: React.FC = () => {
               <span>Manage Bookings</span>
             </Link>
             {user?.role === 'SuperAdmin' && (
-              <>
-                <button
-                  onClick={() => setIsAddAdminModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 shadow-sm hover:bg-indigo-700 transition cursor-pointer"
-                >
-                  <UserPlus className="h-3.5 w-3.5" />
-                  <span>Create Branch Admin</span>
-                </button>
-                <Link
-                  to="/admin/technicians"
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 bg-white border border-slate-200 shadow-sm hover:bg-slate-50 transition"
-                >
-                  <Plus className="h-3.5 w-3.5 text-blue-600" />
-                  <span>Add Technician</span>
-                </Link>
-              </>
+              <button
+                onClick={() => setIsAddAdminModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 shadow-sm hover:bg-indigo-700 transition cursor-pointer"
+              >
+                <UserPlus className="h-3.5 w-3.5" />
+                <span>Create Branch Admin</span>
+              </button>
             )}
+            <Link
+              to="/admin/technicians"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 bg-white border border-slate-200 shadow-sm hover:bg-slate-50 transition"
+            >
+              <Plus className="h-3.5 w-3.5 text-blue-600" />
+              <span>Add Technician</span>
+            </Link>
           </div>
         </div>
 

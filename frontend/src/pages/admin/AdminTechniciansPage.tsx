@@ -43,7 +43,7 @@ export const AdminTechniciansPage: React.FC = () => {
     name: '',
     email: '',
     password: '',
-    centerId: 1,
+    centerId: (!isSuperAdmin && user?.centerId) ? user.centerId : 1,
     specialization: 'General Mechanical & Diagnostics',
   });
 
@@ -66,8 +66,9 @@ export const AdminTechniciansPage: React.FC = () => {
       ]);
       setTechnicians(techData);
       setCenters(centerData);
-      if (centerData.length > 0 && !createForm.centerId) {
-        setCreateForm((prev) => ({ ...prev, centerId: centerData[0].id }));
+      if (centerData.length > 0) {
+        const defaultCenter = user?.role !== 'SuperAdmin' && user?.centerId ? user.centerId : centerData[0].id;
+        setCreateForm((prev) => ({ ...prev, centerId: prev.centerId || defaultCenter }));
       }
     } catch (err: unknown) {
       const errorMsg = axios.isAxiosError(err) ? err.response?.data?.message : undefined;
@@ -75,11 +76,22 @@ export const AdminTechniciansPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [createForm.centerId]);
+  }, [user]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const openAddModal = () => {
+    setCreateForm({
+      name: '',
+      email: '',
+      password: '',
+      centerId: (!isSuperAdmin && user?.centerId) ? user.centerId : (centers[0]?.id || 1),
+      specialization: 'General Mechanical & Diagnostics',
+    });
+    setIsAddModalOpen(true);
+  };
 
   const handleCreateTechnician = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,6 +105,7 @@ export const AdminTechniciansPage: React.FC = () => {
 
       await adminApi.createTechnician({
         ...createForm,
+        centerId: (!isSuperAdmin && user?.centerId) ? user.centerId : createForm.centerId,
         availabilities: defaultAvailabilities,
       });
 
@@ -102,7 +115,7 @@ export const AdminTechniciansPage: React.FC = () => {
         name: '',
         email: '',
         password: '',
-        centerId: centers[0]?.id || 1,
+        centerId: (!isSuperAdmin && user?.centerId) ? user.centerId : (centers[0]?.id || 1),
         specialization: 'General Mechanical & Diagnostics',
       });
       fetchData();
@@ -197,15 +210,13 @@ export const AdminTechniciansPage: React.FC = () => {
               <RefreshCw className="h-3.5 w-3.5" />
               <span>Refresh</span>
             </button>
-            {isSuperAdmin && (
-              <button
-                onClick={() => setIsAddModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 shadow-sm hover:bg-blue-700 transition"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                <span>Onboard Technician</span>
-              </button>
-            )}
+            <button
+              onClick={openAddModal}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 shadow-sm hover:bg-blue-700 transition"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span>Onboard Technician</span>
+            </button>
           </div>
         </div>
 
@@ -311,15 +322,13 @@ export const AdminTechniciansPage: React.FC = () => {
                     <Edit2 className="h-3 w-3" />
                     <span>Edit</span>
                   </button>
-                  {isSuperAdmin && (
-                    <button
-                      onClick={() => setDeletingTech(tech)}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 transition cursor-pointer"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                      <span>Deactivate</span>
-                    </button>
-                  )}
+                  <button
+                    onClick={() => setDeletingTech(tech)}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 transition cursor-pointer"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    <span>Deactivate</span>
+                  </button>
                 </div>
               </div>
             ))}
@@ -383,17 +392,36 @@ export const AdminTechniciansPage: React.FC = () => {
 
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">Assigned Workshop Center</label>
-                  <select
-                    value={createForm.centerId}
-                    onChange={(e) => setCreateForm({ ...createForm, centerId: Number(e.target.value) })}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
-                  >
-                    {centers.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
+                  {isSuperAdmin ? (
+                    <select
+                      value={createForm.centerId}
+                      onChange={(e) => setCreateForm({ ...createForm, centerId: Number(e.target.value) })}
+                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
+                    >
+                      {centers.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <select
+                      disabled
+                      value={createForm.centerId}
+                      className="w-full px-3.5 py-2 bg-slate-100 text-slate-600 border border-slate-200 rounded-xl cursor-not-allowed opacity-80"
+                    >
+                      {centers.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                      {centers.length === 0 && (
+                        <option value={user?.centerId || 1}>
+                          {centers.find((c) => c.id === user?.centerId)?.name || `Center #${user?.centerId || 1}`}
+                        </option>
+                      )}
+                    </select>
+                  )}
                 </div>
 
                 <div>

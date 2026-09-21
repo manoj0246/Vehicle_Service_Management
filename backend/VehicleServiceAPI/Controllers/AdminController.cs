@@ -220,11 +220,22 @@ namespace VehicleServiceAPI.Controllers
         }
 
         [HttpPost("technicians")]
-        [Authorize(Policy = "SuperAdminOnly")]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> CreateTechnician([FromBody] CreateTechnicianDto createDto)
         {
             try
             {
+                var role = GetCurrentUserRole();
+                if (role == "Admin")
+                {
+                    var adminCenterId = GetCurrentUserCenterId();
+                    if (!adminCenterId.HasValue)
+                    {
+                        return StatusCode(403, new { success = false, message = "Admin is not assigned to a workshop center" });
+                    }
+                    createDto.CenterId = adminCenterId.Value;
+                }
+
                 var technician = await _adminService.CreateTechnicianAsync(createDto);
                 return CreatedAtAction(
                     nameof(GetTechnicianById),
@@ -283,11 +294,22 @@ namespace VehicleServiceAPI.Controllers
         }
 
         [HttpDelete("technicians/{id}")]
-        [Authorize(Policy = "SuperAdminOnly")]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> DeleteTechnician(int id)
         {
             try
             {
+                var role = GetCurrentUserRole();
+                if (role == "Admin")
+                {
+                    var adminCenterId = GetCurrentUserCenterId();
+                    var existingTech = await _adminService.GetTechnicianByIdAsync(id);
+                    if (existingTech.CenterId != adminCenterId)
+                    {
+                        return StatusCode(403, new { success = false, message = "Cannot delete technicians from other workshop centers" });
+                    }
+                }
+
                 await _adminService.DeleteTechnicianAsync(id);
                 return Ok(new { success = true, message = "Technician deleted successfully" });
             }

@@ -102,5 +102,50 @@ describe('AdminTechniciansPage', () => {
       expect(adminApi.createTechnician).toHaveBeenCalled();
     });
   });
+
+  it('allows branch Admin to see onboard button and add technician to their center', async () => {
+    vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
+      user: {
+        id: 20,
+        name: 'Branch Admin',
+        email: 'admin@autocare.in',
+        role: 'Admin',
+        centerId: 1,
+      },
+      token: 'mock-admin-token',
+      isAuthenticated: true,
+      isLoading: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+    });
+
+    vi.mocked(adminApi.getAllTechnicians).mockResolvedValue([]);
+    vi.mocked(adminApi.getAllCenters).mockResolvedValue([
+      {
+        id: 1,
+        name: 'AutoCare Central Bengaluru',
+        address: '123 MG Road',
+        phone: '+91 80 1234 5678',
+        serviceCount: 5,
+        technicianCount: 0,
+        isDeleted: false,
+      },
+    ]);
+
+    render(
+      <BrowserRouter>
+        <AdminTechniciansPage />
+      </BrowserRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Onboard Technician/i })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Onboard Technician/i }));
+
+    expect(screen.getByText(/Onboard New Technician/i)).toBeInTheDocument();
+  });
 });
 

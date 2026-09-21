@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { 
@@ -24,7 +25,7 @@ export const AppointmentsPage: React.FC = () => {
   const [cancelBookingId, setCancelBookingId] = useState<number | null>(null);
   const [cancelling, setCancelling] = useState<boolean>(false);
 
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -34,12 +35,13 @@ export const AppointmentsPage: React.FC = () => {
       ]);
       setUpcoming(upcomingData);
       setHistory(historyData);
-    } catch (err: any) {
-      setError('Failed to fetch your appointments. Please verify connection.');
+    } catch (err: unknown) {
+      const errorMsg = axios.isAxiosError(err) ? err.response?.data?.message : undefined;
+      setError(errorMsg ?? 'Failed to fetch your appointments. Please verify connection.');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (isLoading) return;
@@ -48,7 +50,7 @@ export const AppointmentsPage: React.FC = () => {
       return;
     }
     fetchBookings();
-  }, [isAuthenticated, isLoading, navigate]);
+  }, [isAuthenticated, isLoading, navigate, fetchBookings]);
 
   const handleConfirmCancel = async () => {
     if (!cancelBookingId) return;
@@ -58,8 +60,9 @@ export const AppointmentsPage: React.FC = () => {
       await cancelBooking(cancelBookingId);
       setCancelBookingId(null);
       await fetchBookings();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to cancel booking.');
+    } catch (err: unknown) {
+      const errorMsg = axios.isAxiosError(err) ? err.response?.data?.message : undefined;
+      setError(errorMsg ?? 'Failed to cancel booking.');
     } finally {
       setCancelling(false);
     }

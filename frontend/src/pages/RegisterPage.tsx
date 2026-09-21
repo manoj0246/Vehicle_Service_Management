@@ -8,7 +8,6 @@ import {
   User as UserIcon, 
   AlertCircle, 
   ArrowRight, 
-  ShieldCheck, 
   Eye, 
   EyeOff, 
   Wrench,
@@ -88,7 +87,7 @@ export const RegisterPage: React.FC = () => {
             <div className="space-y-2">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-blue-50 text-blue-700 text-xs font-bold border border-blue-100">
                 <UserPlus className="h-3.5 w-3.5" />
-                <span>Customer Registration</span>
+                <span>Registration</span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight">
                 Create Account
@@ -208,10 +207,7 @@ export const RegisterPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="p-3 bg-blue-50/80 rounded-xl border border-blue-100 flex items-center gap-2.5 text-xs text-blue-800 font-medium">
-                <ShieldCheck className="h-4 w-4 text-blue-600 shrink-0" />
-                <span>Account automatically provisions a verified Customer Garage profile.</span>
-              </div>
+              
 
               <button
                 type="submit"
@@ -222,7 +218,7 @@ export const RegisterPage: React.FC = () => {
                   <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 ) : (
                   <>
-                    <span>Create Customer Account</span>
+                    <span>Create your Account</span>
                     <ArrowRight className="h-4 w-4" />
                   </>
                 )}

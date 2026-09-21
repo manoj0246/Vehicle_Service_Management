@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { User, LoginRequest, RegisterRequest } from '../types/auth';
+import type { User, LoginRequest, RegisterRequest, UserRole } from '../types/auth';
 import { authApi } from '../api/authApi';
 
 interface AuthContextType {
@@ -14,6 +14,51 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function decodeJwtPayload(token: string): Partial<User> | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length < 2) return null;
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    const payload = JSON.parse(jsonPayload);
+
+    const role = (
+      payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ||
+      payload['role'] ||
+      'Customer'
+    ) as UserRole;
+
+    const idStr =
+      payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] ||
+      payload['nameid'] ||
+      payload['sub'] ||
+      '0';
+    const id = parseInt(idStr, 10);
+
+    const email =
+      payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] ||
+      payload['email'] ||
+      '';
+
+    const name =
+      payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] ||
+      payload['name'] ||
+      '';
+
+    const centerId = payload['CenterId'] ? parseInt(payload['CenterId'], 10) : null;
+
+    return { id, name, email, role, centerId };
+  } catch {
+    return null;
+  }
+}
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -22,11 +67,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     try {
       const savedToken = localStorage.getItem('token');
-      const savedUser = localStorage.getItem('user');
+      const savedUserStr = localStorage.getItem('user');
 
-      if (savedToken && savedUser) {
-        setToken(savedToken);
-        setUser(JSON.parse(savedUser));
+      if (savedToken) {
+        const decoded = decodeJwtPayload(savedToken);
+        let parsedUser: Partial<User> = {};
+        if (savedUserStr) {
+          try {
+            parsedUser = JSON.parse(savedUserStr);
+          } catch {
+            // Ignore corrupt JSON in user storage
+          }
+        }
+
+        if (decoded && decoded.id) {
+          const mergedUser: User = {
+            id: decoded.id,
+            name: decoded.name || parsedUser.name || '',
+            email: decoded.email || parsedUser.email || '',
+            role: decoded.role || (parsedUser.role as UserRole) || 'Customer',
+            centerId: decoded.centerId !== undefined ? decoded.centerId : (parsedUser.centerId ?? null),
+            createdAt: parsedUser.createdAt,
+            isDeleted: parsedUser.isDeleted,
+          };
+          setToken(savedToken);
+          setUser(mergedUser);
+        } else if (savedUserStr) {
+          setToken(savedToken);
+          setUser(JSON.parse(savedUserStr));
+        }
       }
     } catch (err) {
       console.error('Failed to load session:', err);
@@ -87,4 +156,3 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
-

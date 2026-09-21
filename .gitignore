@@ -10,4 +10,4 @@ dist/
 *.user
 appsettings.local.json
 appsettings.Development.json
-.day7_backup/
+

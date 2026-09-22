@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
   Wrench, 
@@ -22,7 +22,59 @@ import {
 export const Navbar: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const isLinkActive = (path: string) => {
+    if (path === '/') {
+      return location.pathname === '/' && !location.hash;
+    }
+    if (path.startsWith('/#')) {
+      return location.pathname === '/' && location.hash === path.substring(1);
+    }
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+  };
+
+  const getNavLinkClass = (path: string, theme: 'blue' | 'amber' | 'purple' = 'blue') => {
+    const active = isLinkActive(path);
+    if (!active) {
+      return 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5 font-semibold text-xs sm:text-sm';
+    }
+
+    if (theme === 'amber') {
+      return 'bg-amber-50 text-amber-800 font-bold px-2.5 py-1.5 rounded-xl shadow-xs border border-amber-200/80 transition flex items-center gap-1.5 text-xs sm:text-sm';
+    }
+
+    if (theme === 'purple') {
+      return 'bg-purple-50 text-purple-800 font-bold px-2.5 py-1.5 rounded-xl shadow-xs border border-purple-200/80 transition flex items-center gap-1.5 text-xs sm:text-sm';
+    }
+
+    return 'bg-blue-50 text-blue-700 font-bold px-2.5 py-1.5 rounded-xl shadow-xs border border-blue-200/80 transition flex items-center gap-1.5 text-xs sm:text-sm';
+  };
+
+  const getIconClass = (path: string, theme: 'blue' | 'amber' | 'purple' = 'blue') => {
+    const active = isLinkActive(path);
+    if (!active) {
+      return 'h-4 w-4 text-slate-400 group-hover:text-slate-600';
+    }
+    if (theme === 'amber') return 'h-4 w-4 text-amber-600';
+    if (theme === 'purple') return 'h-4 w-4 text-purple-600';
+    return 'h-4 w-4 text-blue-600';
+  };
+
+  const getMobileLinkClass = (path: string, theme: 'blue' | 'amber' | 'purple' = 'blue') => {
+    const active = isLinkActive(path);
+    if (!active) {
+      return 'block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50';
+    }
+    if (theme === 'amber') {
+      return 'block px-3 py-2 rounded-lg text-sm font-bold text-amber-800 bg-amber-50 border border-amber-200/70 shadow-xs';
+    }
+    if (theme === 'purple') {
+      return 'block px-3 py-2 rounded-lg text-sm font-bold text-purple-800 bg-purple-50 border border-purple-200/70 shadow-xs';
+    }
+    return 'block px-3 py-2 rounded-lg text-sm font-bold text-blue-700 bg-blue-50 border border-blue-200/70 shadow-xs';
+  };
 
   const handleLogout = () => {
     logout();
@@ -85,79 +137,79 @@ export const Navbar: React.FC = () => {
             </div>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-5 text-sm font-semibold text-slate-700">
+          <nav className="hidden md:flex items-center gap-2 text-sm font-semibold text-slate-700">
             {isAuthenticated && isAdmin ? (
               <>
-                <Link to="/admin/dashboard" className="hover:text-blue-600 transition flex items-center gap-1.5 font-bold text-blue-700">
-                  <LayoutDashboard className="h-4 w-4 text-blue-600" />
+                <Link to="/admin/dashboard" className={getNavLinkClass('/admin/dashboard')}>
+                  <LayoutDashboard className={getIconClass('/admin/dashboard')} />
                   <span>Dashboard</span>
                 </Link>
-                <Link to="/admin/bookings" className="hover:text-blue-600 transition flex items-center gap-1.5">
-                  <Calendar className="h-4 w-4 text-slate-500" />
+                <Link to="/admin/bookings" className={getNavLinkClass('/admin/bookings')}>
+                  <Calendar className={getIconClass('/admin/bookings')} />
                   <span>Bookings</span>
                 </Link>
-                <Link to="/admin/technicians" className="hover:text-blue-600 transition flex items-center gap-1.5">
-                  <Wrench className="h-4 w-4 text-slate-500" />
+                <Link to="/admin/technicians" className={getNavLinkClass('/admin/technicians')}>
+                  <Wrench className={getIconClass('/admin/technicians')} />
                   <span>Technicians</span>
                 </Link>
-                <Link to="/admin/centers" className="hover:text-blue-600 transition flex items-center gap-1.5">
-                  <Building2 className="h-4 w-4 text-slate-500" />
+                <Link to="/admin/centers" className={getNavLinkClass('/admin/centers')}>
+                  <Building2 className={getIconClass('/admin/centers')} />
                   <span>Centers</span>
                 </Link>
-                <Link to="/admin/services" className="hover:text-blue-600 transition flex items-center gap-1.5">
-                  <Layers className="h-4 w-4 text-slate-500" />
+                <Link to="/admin/services" className={getNavLinkClass('/admin/services')}>
+                  <Layers className={getIconClass('/admin/services')} />
                   <span>Services</span>
                 </Link>
-                <Link to="/admin/users" className="hover:text-blue-600 transition flex items-center gap-1.5">
-                  <Users className="h-4 w-4 text-slate-500" />
+                <Link to="/admin/users" className={getNavLinkClass('/admin/users')}>
+                  <Users className={getIconClass('/admin/users')} />
                   <span>Users</span>
                 </Link>
                 {isSuperAdmin && (
-                  <Link to="/admin/audit-logs" className="hover:text-purple-600 transition flex items-center gap-1.5 text-purple-700">
-                    <ShieldAlert className="h-4 w-4 text-purple-600" />
+                  <Link to="/admin/audit-logs" className={getNavLinkClass('/admin/audit-logs', 'purple')}>
+                    <ShieldAlert className={getIconClass('/admin/audit-logs', 'purple')} />
                     <span>Audit Logs</span>
                   </Link>
                 )}
               </>
             ) : isAuthenticated && isTechnician ? (
               <>
-                <Link to="/technician/dashboard" className="hover:text-blue-600 transition flex items-center gap-1.5 font-bold text-amber-700">
-                  <LayoutDashboard className="h-4 w-4 text-amber-600" />
+                <Link to="/technician/dashboard" className={getNavLinkClass('/technician/dashboard', 'amber')}>
+                  <LayoutDashboard className={getIconClass('/technician/dashboard', 'amber')} />
                   <span>Dashboard</span>
                 </Link>
-                <Link to="/technician/jobs" className="hover:text-blue-600 transition flex items-center gap-1.5">
-                  <ClipboardList className="h-4 w-4 text-slate-500" />
+                <Link to="/technician/jobs" className={getNavLinkClass('/technician/jobs', 'amber')}>
+                  <ClipboardList className={getIconClass('/technician/jobs', 'amber')} />
                   <span>Job Queue</span>
                 </Link>
-                <Link to="/technician/schedule" className="hover:text-blue-600 transition flex items-center gap-1.5">
-                  <Clock className="h-4 w-4 text-slate-500" />
+                <Link to="/technician/schedule" className={getNavLinkClass('/technician/schedule', 'amber')}>
+                  <Clock className={getIconClass('/technician/schedule', 'amber')} />
                   <span>My Schedule</span>
                 </Link>
               </>
             ) : isAuthenticated && !isTechnician && !isAdmin ? (
               <>
-                <Link to="/vehicles" className="hover:text-blue-600 transition flex items-center gap-1.5">
-                  <Car className="h-4 w-4 text-slate-500" />
+                <Link to="/vehicles" className={getNavLinkClass('/vehicles')}>
+                  <Car className={getIconClass('/vehicles')} />
                   <span>My Garage</span>
                 </Link>
-                <Link to="/book" className="hover:text-blue-600 transition flex items-center gap-1.5 font-bold text-blue-600">
-                  <Wrench className="h-4 w-4 text-blue-600" />
+                <Link to="/book" className={getNavLinkClass('/book')}>
+                  <Wrench className={getIconClass('/book')} />
                   <span>Book Service</span>
                 </Link>
-                <Link to="/appointments" className="hover:text-blue-600 transition flex items-center gap-1.5">
-                  <Calendar className="h-4 w-4 text-slate-500" />
+                <Link to="/appointments" className={getNavLinkClass('/appointments')}>
+                  <Calendar className={getIconClass('/appointments')} />
                   <span>My Bookings</span>
                 </Link>
               </>
             ) : (
               <>
-                <Link to="/" className="hover:text-blue-600 transition">
+                <Link to="/" className={getNavLinkClass('/')}>
                   Home
                 </Link>
-                <a href="/#services" className="hover:text-blue-600 transition">
+                <a href="/#services" className={getNavLinkClass('/#services')}>
                   Services
                 </a>
-                <a href="/#centers" className="hover:text-blue-600 transition">
+                <a href="/#centers" className={getNavLinkClass('/#centers')}>
                   Workshops
                 </a>
               </>
@@ -230,42 +282,42 @@ export const Navbar: React.FC = () => {
                   <Link
                     to="/admin/dashboard"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-sm font-bold text-blue-700 hover:bg-blue-50"
+                    className={getMobileLinkClass('/admin/dashboard')}
                   >
                     Dashboard
                   </Link>
                   <Link
                     to="/admin/bookings"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                    className={getMobileLinkClass('/admin/bookings')}
                   >
                     Bookings Queue
                   </Link>
                   <Link
                     to="/admin/technicians"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                    className={getMobileLinkClass('/admin/technicians')}
                   >
                     Technicians
                   </Link>
                   <Link
                     to="/admin/centers"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                    className={getMobileLinkClass('/admin/centers')}
                   >
                     Workshop Centers
                   </Link>
                   <Link
                     to="/admin/services"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                    className={getMobileLinkClass('/admin/services')}
                   >
                     Workshop Services
                   </Link>
                   <Link
                     to="/admin/users"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                    className={getMobileLinkClass('/admin/users')}
                   >
                     User Accounts
                   </Link>
@@ -273,7 +325,7 @@ export const Navbar: React.FC = () => {
                     <Link
                       to="/admin/audit-logs"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="block px-3 py-2 rounded-lg text-sm font-semibold text-purple-700 hover:bg-purple-50"
+                      className={getMobileLinkClass('/admin/audit-logs', 'purple')}
                     >
                       System Audit Logs
                     </Link>
@@ -284,21 +336,21 @@ export const Navbar: React.FC = () => {
                   <Link
                     to="/technician/dashboard"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-sm font-bold text-amber-700 hover:bg-amber-50"
+                    className={getMobileLinkClass('/technician/dashboard', 'amber')}
                   >
                     Dashboard
                   </Link>
                   <Link
                     to="/technician/jobs"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                    className={getMobileLinkClass('/technician/jobs', 'amber')}
                   >
                     Job Queue
                   </Link>
                   <Link
                     to="/technician/schedule"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                    className={getMobileLinkClass('/technician/schedule', 'amber')}
                   >
                     My Schedule
                   </Link>
@@ -308,21 +360,21 @@ export const Navbar: React.FC = () => {
                   <Link
                     to="/vehicles"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                    className={getMobileLinkClass('/vehicles')}
                   >
                     My Garage
                   </Link>
                   <Link
                     to="/book"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-sm font-bold text-blue-600 hover:bg-blue-50"
+                    className={getMobileLinkClass('/book')}
                   >
                     Book Service
                   </Link>
                   <Link
                     to="/appointments"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                    className={getMobileLinkClass('/appointments')}
                   >
                     My Bookings
                   </Link>
@@ -347,21 +399,21 @@ export const Navbar: React.FC = () => {
               <Link
                 to="/"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                className={getMobileLinkClass('/')}
               >
                 Home
               </Link>
               <a
                 href="/#services"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                className={getMobileLinkClass('/#services')}
               >
                 Services
               </a>
               <a
                 href="/#centers"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                className={getMobileLinkClass('/#centers')}
               >
                 Workshops
               </a>

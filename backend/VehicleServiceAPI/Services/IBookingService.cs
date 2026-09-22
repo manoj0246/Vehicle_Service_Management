@@ -15,7 +15,7 @@ namespace VehicleServiceAPI.Services
         Task<bool> AssignTechnicianAsync(int bookingId, int technicianId);
         Task<bool> UpdateBookingStatusAsync(int bookingId, string status, string notes, string role, int userId);
 
-        Task<bool> IsTechnicianAvailableAsync(int technicianId, DateTime scheduledDate, int durationMinutes);
+        Task<bool> IsTechnicianAvailableAsync(int technicianId, DateTime scheduledDate, int durationMinutes, int? excludeBookingId = null);
         Task<bool> ValidateVehicleOwnershipAsync(int vehicleId, int customerId);
     }
 }

@@ -165,6 +165,25 @@ namespace VehicleServiceAPI.Data
                 }
             }
 
+            // Seed default weekly shifts for technicians without any shift configuration
+            var techniciansWithoutShifts = await context.Technicians
+                .Where(t => !t.IsDeleted && !context.TechnicianAvailabilities.Any(a => a.TechnicianId == t.Id))
+                .ToListAsync();
+
+            foreach (var tech in techniciansWithoutShifts)
+            {
+                for (int d = 0; d <= 6; d++)
+                {
+                    context.TechnicianAvailabilities.Add(new TechnicianAvailability
+                    {
+                        TechnicianId = tech.Id,
+                        DayOfWeek = (DayOfWeek)d,
+                        StartTime = new TimeSpan(8, 0, 0),
+                        EndTime = new TimeSpan(20, 0, 0)
+                    });
+                }
+            }
+
             await context.SaveChangesAsync();
         }
     }

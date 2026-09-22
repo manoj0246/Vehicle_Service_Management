@@ -307,7 +307,7 @@ namespace VehicleServiceAPI.Services
                 var scheduledUtc = EnsureUtc(booking.ScheduledDate);
                 var durationMinutes = booking.Service?.DurationMinutes ?? 60;
 
-                var isAvailable = await IsTechnicianAvailableAsync(technicianId, scheduledUtc, durationMinutes);
+                var isAvailable = await IsTechnicianAvailableAsync(technicianId, scheduledUtc, durationMinutes, bookingId);
                 if (!isAvailable)
                     throw new InvalidOperationException("Technician is not available during this time slot or shift window");
 
@@ -371,7 +371,7 @@ namespace VehicleServiceAPI.Services
             return true;
         }
 
-        public async Task<bool> IsTechnicianAvailableAsync(int technicianId, DateTime scheduledDate, int durationMinutes)
+        public async Task<bool> IsTechnicianAvailableAsync(int technicianId, DateTime scheduledDate, int durationMinutes, int? excludeBookingId = null)
         {
             var technician = await _context.Technicians
                 .FirstOrDefaultAsync(t => t.Id == technicianId && !t.IsDeleted);
@@ -384,14 +384,20 @@ namespace VehicleServiceAPI.Services
             var startTime = scheduledUtc.TimeOfDay;
             var endTime = startTime.Add(TimeSpan.FromMinutes(durationMinutes));
 
-            var availability = await _context.TechnicianAvailabilities
-                .FirstOrDefaultAsync(a => a.TechnicianId == technicianId
-                    && a.DayOfWeek == dayOfWeek
-                    && a.StartTime <= startTime
-                    && a.EndTime >= endTime);
+            var hasConfiguredShifts = await _context.TechnicianAvailabilities
+                .AnyAsync(a => a.TechnicianId == technicianId);
 
-            if (availability == null)
-                return false;
+            if (hasConfiguredShifts)
+            {
+                var availability = await _context.TechnicianAvailabilities
+                    .FirstOrDefaultAsync(a => a.TechnicianId == technicianId
+                        && a.DayOfWeek == dayOfWeek
+                        && a.StartTime <= startTime
+                        && a.EndTime >= endTime);
+
+                if (availability == null)
+                    return false;
+            }
 
             var newStart = scheduledUtc;
             var newEnd = scheduledUtc.AddMinutes(durationMinutes);
@@ -401,6 +407,7 @@ namespace VehicleServiceAPI.Services
                 .Where(sr => sr.TechnicianId == technicianId
                     && sr.Status != "Completed"
                     && sr.Status != "Cancelled"
+                    && (!excludeBookingId.HasValue || sr.Id != excludeBookingId.Value)
                     && sr.ScheduledDate < newEnd)
                 .ToListAsync();
 

@@ -82,7 +82,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowReact",
         policy =>
         {
-            policy.WithOrigins("http://localhost:3000", "http://localhost:5173")
+            policy.SetIsOriginAllowed(origin => true)
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials();
@@ -91,16 +91,16 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+using (var scope = app.Services.CreateScope())
 {
-    using var scope = app.Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    dbContext.Database.Migrate();
-
-    app.UseOpenApi();
-    app.UseSwaggerUi();
+    await DbInitializer.SeedAsync(dbContext);
 }
-else
+
+app.UseOpenApi();
+app.UseSwaggerUi();
+
+if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }

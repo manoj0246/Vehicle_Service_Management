@@ -16,4 +16,12 @@ namespace VehicleServiceAPI.DTOs
         public string Role { get; set; }
         public int? CenterId { get; set; }
     }
+
+    public class CreateAdminDto
+    {
+        public string Name { get; set; }
+        public string Email { get; set; }
+        public string Password { get; set; }
+        public int CenterId { get; set; }
+    }
 }

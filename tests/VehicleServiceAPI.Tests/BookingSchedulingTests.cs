@@ -220,6 +220,72 @@ namespace VehicleServiceAPI.Tests
 
             Assert.Contains("Cannot book services in the past", ex.Message);
         }
+
+        [Fact]
+        public async Task IsTechnicianAvailableAsync_TechnicianWithoutConfiguredShifts_ReturnsTrue()
+        {
+            using var context = CreateDbContext();
+            var mockLogger = new Mock<ILogger<BookingService>>();
+            var bookingService = new BookingService(context, mockLogger.Object);
+
+            var techUser = new User { Id = 20, Name = "Tech Sam", Email = "sam@tech.com", PasswordHash = "hash", Role = "Technician" };
+            var technician = new Technician { Id = 2, UserId = 20, CenterId = 1, Specialization = "Brakes", IsDeleted = false };
+
+            context.Users.Add(techUser);
+            context.Technicians.Add(technician);
+            await context.SaveChangesAsync();
+
+            // No shifts configured in TechnicianAvailabilities - technician should default to available if no conflicting booking
+            var scheduledDate = DateTime.UtcNow.AddDays(2);
+            var isAvailable = await bookingService.IsTechnicianAvailableAsync(2, scheduledDate, 60);
+
+            Assert.True(isAvailable);
+        }
+
+        [Fact]
+        public async Task AssignTechnicianAsync_ReassignSameTechnician_SucceedsWithoutSelfCollision()
+        {
+            using var context = CreateDbContext();
+            var mockLogger = new Mock<ILogger<BookingService>>();
+            var bookingService = new BookingService(context, mockLogger.Object);
+
+            var customer = new User { Id = 2, Name = "Customer B", Email = "b@test.com", PasswordHash = "hash", Role = "Customer" };
+            var vehicle = new Vehicle { Id = 2, CustomerId = 2, Make = "Honda", Model = "Civic", Year = 2021, LicensePlate = "XYZ-789" };
+            var center = new ServiceCenter { Id = 2, Name = "North Hub", Address = "456 Ave", Phone = "9876543210", IsDeleted = false };
+            var service = new Service { Id = 2, CenterId = 2, Name = "Brake Inspection", Price = 80, DurationMinutes = 60, IsDeleted = false };
+
+            var techUser = new User { Id = 21, Name = "Tech Joe", Email = "joe@tech.com", PasswordHash = "hash", Role = "Technician" };
+            var technician = new Technician { Id = 3, UserId = 21, CenterId = 2, Specialization = "Brakes", IsDeleted = false };
+
+            var scheduledDate = DateTime.UtcNow.AddDays(3);
+            var existingBooking = new ServiceRequest
+            {
+                Id = 10,
+                CustomerId = 2,
+                VehicleId = 2,
+                ServiceId = 2,
+                TechnicianId = 3,
+                ScheduledDate = scheduledDate,
+                Status = "Confirmed",
+                Service = service,
+                Vehicle = vehicle,
+                Customer = customer,
+                Technician = technician
+            };
+
+            context.Users.AddRange(customer, techUser);
+            context.Vehicles.Add(vehicle);
+            context.ServiceCenters.Add(center);
+            context.Services.Add(service);
+            context.Technicians.Add(technician);
+            context.ServiceRequests.Add(existingBooking);
+            await context.SaveChangesAsync();
+
+            // Re-assigning or updating the technician on the same booking should not collide with itself
+            var result = await bookingService.AssignTechnicianAsync(10, 3);
+
+            Assert.True(result);
+        }
     }
 }
 

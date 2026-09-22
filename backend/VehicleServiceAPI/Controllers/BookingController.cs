@@ -33,6 +33,12 @@ namespace VehicleServiceAPI.Controllers
             return User.FindFirst(ClaimTypes.Role)?.Value ?? "Customer";
         }
 
+        private int? GetCurrentUserCenterId()
+        {
+            var centerIdClaim = User.FindFirst("CenterId")?.Value;
+            return !string.IsNullOrEmpty(centerIdClaim) ? int.Parse(centerIdClaim) : null;
+        }
+
         [HttpPost]
         [Authorize(Policy = "CustomerOnly")]
         public async Task<IActionResult> BookService([FromBody] BookingRequestDto request)
@@ -215,7 +221,10 @@ namespace VehicleServiceAPI.Controllers
         {
             try
             {
-                var bookings = await _bookingService.GetAllBookingsAsync(filters);
+                var role = GetCurrentUserRole();
+                int? centerId = role == "Admin" ? GetCurrentUserCenterId() : null;
+
+                var bookings = await _bookingService.GetAllBookingsAsync(filters, centerId);
 
                 return Ok(new
                 {
